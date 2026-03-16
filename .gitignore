@@ -1,0 +1,26 @@
+## Visual Studio / .NET Core
+[bb]in/
+[Oo]bj/
+[Ll]og/
+[Ww]wwroot/lib/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## OS Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Other logs
+*.log
+msbuild.errors
+msbuild.log
+build_*.txt
+final_*.txt
+*.log.txt
+errors_latest.txt
+scaffoldingReadMe.txt
+assign_users.sql
+migrate.sql
