@@ -1,0 +1,46 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+
+@{
+    ViewData["Title"] = "Archived Requests";
+    var currentFilter = ViewBag.CurrentFilter as string ?? "all";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-archive"></i> Archived </h2>
+
+    <!-- FILTER DROPDOWN -->
+    <div class="dropdown">
+        <button class="btn btn-warning dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-funnel me-1"></i>
+            @if (currentFilter == "po") { <text>Purchase Orders</text> }
+            else if (currentFilter == "receipt") { <text>PO Receipts</text> }
+            else { <text>All Archives</text> }
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li>
+                <a class="dropdown-item @(currentFilter == "all" ? "active" : "")" asp-action="ArchivedList" asp-route-filter="all">
+                    <i class="bi bi-collection me-2"></i> All Archives
+                </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                <a class="dropdown-item @(currentFilter == "po" ? "active" : "")" asp-action="ArchivedList" asp-route-filter="po">
+                    <i class="bi bi-receipt me-2"></i> Purchase Orders
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item @(currentFilter == "receipt" ? "active" : "")" asp-action="ArchivedList" asp-route-filter="receipt">
+                    <i class="bi bi-file-earmark-text me-2"></i> PO Receipts
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="ajax-pagination-container">
+            @await Html.PartialAsync("_TreasurerArchivedListTable", Model)
+        </div>
+    </div>
+</div>

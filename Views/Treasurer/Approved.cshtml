@@ -1,0 +1,15 @@
+﻿@model Latog_Final_project.Models.ResourceRequestViewModel
+
+@{
+    ViewData["Title"] = "Approved Requests";
+}
+
+<h2 class="mb-4 fw-bold">Approved Resource Requests</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="ajax-pagination-container">
+            @await Html.PartialAsync("_ApprovedTable", Model)
+        </div>
+    </div>
+</div>

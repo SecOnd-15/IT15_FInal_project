@@ -1,0 +1,326 @@
+﻿@model Latog_Final_project.Models.ProcurementReportViewModel
+
+@{
+    ViewData["Title"] = "Chairman BI Dashboard";
+}
+
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --premium-primary: #1e3a5f;
+        --premium-accent: #3b82f6;
+        --premium-bg: #f8fafc;
+        --premium-card-bg: #ffffff;
+        --premium-text-main: #1e293b;
+        --premium-text-muted: #64748b;
+        --premium-border: #e2e8f0;
+        --premium-success: #10b981;
+        --premium-warning: #f59e0b;
+        --premium-danger: #ef4444;
+        --premium-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--premium-bg);
+    }
+
+    .bi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .bi-title-group h1 { font-weight: 800; font-size: 1.75rem; letter-spacing: -0.025em; margin: 0; color: #0f172a; }
+    .bi-title-group p { color: var(--premium-text-muted); font-weight: 500; margin: 0.25rem 0 0; }
+
+    /* KPI Grid */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .metric-card {
+        background: var(--premium-card-bg);
+        border: 1px solid var(--premium-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--premium-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--accent-color, var(--premium-primary));
+    }
+
+    .metric-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--premium-text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .metric-value { font-size: 1.75rem; font-weight: 800; color: #0f172a; }
+
+    /* Panels */
+    .bi-panel {
+        background: var(--premium-card-bg);
+        border: 1px solid var(--premium-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--premium-shadow);
+        height: 100%;
+    }
+
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .panel-title { font-weight: 700; font-size: 1.1rem; color: #1e293b; }
+
+    /* Approvals Table */
+    .bi-table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+    .bi-table th { font-weight: 600; font-size: 0.75rem; color: var(--premium-text-muted); text-transform: uppercase; padding: 0.75rem; border-bottom: 1px solid var(--premium-border); }
+    .bi-table td { padding: 1rem 0.75rem; background: #fff; vertical-align: middle; }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .status-approved { background: rgba(16, 185, 129, 0.1); color: #059669; }
+</style>
+
+@inject Latog_Final_project.Services.IBranchService BranchService
+
+<div class="container-fluid px-4 py-4">
+    @{
+        var branch = await BranchService.GetCurrentBranchAsync();
+        var branchName = branch?.BranchName ?? "Your Barangay";
+    }
+
+    <div class="bi-header">
+        <div class="bi-title-group">
+            <h1>Business Intelligence</h1>
+            <p><i class="bi bi-calendar3 me-1"></i> @DateTime.Now.ToString("dddd, MMMM d, yyyy") · @branchName Dashboard</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <form method="get" asp-action="Index" class="d-flex align-items-center gap-2 ajax-form">
+                <div class="d-flex align-items-center gap-2 bg-white p-2 border rounded-3 shadow-sm">
+                    <input type="date" name="startDate" class="form-control form-control-sm border-0" style="width: auto; font-weight: 600;" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd"))">
+                    <span class="text-muted small fw-bold">to</span>
+                    <input type="date" name="endDate" class="form-control form-control-sm border-0" style="width: auto; font-weight: 600;" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))">
+                </div>
+                <button type="submit" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold" style="color: white; height: 42px;">Filter</button>
+            </form>
+            <div class="vr mx-1" style="height: 30px;"></div>
+            <a href="@Url.Action("ForApproval", "Chairman")" class="btn btn-primary rounded-pill px-4 fw-bold d-flex align-items-center" style="height: 42px;">
+                <i class="bi bi-file-earmark-check me-2"></i> Review Pending
+            </a>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="metric-grid">
+        <div class="metric-card" style="--accent-color: #1e3a5f;">
+            <div class="metric-label">Operational Spending</div>
+            <div class="metric-value">₱@Model.TotalSpending.ToString("N0")</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #3b82f6;">
+            <div class="metric-label">Total Requisitions</div>
+            <div class="metric-value">@Model.TotalRequests</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #10b981;">
+            <div class="metric-label">Approval Rate</div>
+            <div class="metric-value">@((Model.TotalRequests > 0 ? (Model.ApprovedRequests * 100 / Model.TotalRequests) : 0))%</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #ef4444;">
+            <div class="metric-label">Pending Reviews</div>
+            <div class="metric-value">@Model.PendingRequests</div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Section -->
+    <div class="row g-4 mb-4">
+        <!-- Spending Distribution -->
+        <div class="col-lg-7">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Budgets Distribution by Category</h2>
+                    <span class="text-muted small fw-bold">Strategic Allocation</span>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="chairmanCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Success Pulse -->
+        <div class="col-lg-5">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Request Status Pulse</h2>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="chairmanStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Monthly Fiscal Overview -->
+        <div class="col-lg-12">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Monthly Fiscal Flow Overview</h2>
+                    <span class="badge bg-light text-secondary border fw-semibold px-3 py-2" style="font-size:0.8rem;">
+                        @if (Model.StartDate.HasValue && Model.EndDate.HasValue)
+                        {
+                            @($"{Model.StartDate.Value:MMM dd, yyyy} – {Model.EndDate.Value:MMM dd, yyyy}")
+                        }
+                        else
+                        {
+                            @("All Time")
+                        }
+                    </span>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="chairmanTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables Row -->
+    <div class="row g-4">
+        <!-- Recent Approved Items -->
+        <div class="col-lg-12">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Strategically Approved Requisitions</h2>
+                    <a href="@Url.Action("RejectedCompleted", "Chairman")" class="text-primary small fw-bold text-decoration-none">Full History →</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="bi-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Value</th>
+                                <th>Decision Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.RecentApprovals)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@r.ItemName</td>
+                                    <td><span class="text-muted small fw-bold">@r.Category</span></td>
+                                    <td class="fw-bold">₱@(r.TotalAmount?.ToString("N2") ?? "0.00")</td>
+                                    <td>@r.DecisionDate?.ToString("MMM dd, yyyy")</td>
+                                    <td><span class="status-badge status-approved">Approved</span></td>
+                                </tr>
+                            }
+                            @if (!Model.RecentApprovals.Any())
+                            {
+                                <tr><td colspan="5" class="text-center py-5 text-muted">No recent approvals found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        // Shared Options
+        const sharedOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        };
+
+        // 1. Category Breakdown (Bar)
+        new Chart(document.getElementById('chairmanCategoryChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.SpendingByCategory.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.SpendingByCategory.Select(d => d.Value))),
+                    backgroundColor: '#1E3A5F',
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: sharedOpts
+        });
+
+        // 2. Status Pulse (Doughnut)
+        new Chart(document.getElementById('chairmanStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.RequestStatusDistribution.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.RequestStatusDistribution.Select(d => d.Value))),
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 5,
+                    borderColor: '#fff',
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { padding: 30, usePointStyle: true, font: { weight: '700', size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // 3. Fiscal Trend (Area)
+        new Chart(document.getElementById('chairmanTrendChart'), {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.MonthlySpendingTrend.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.MonthlySpendingTrend.Select(d => d.Value))),
+                    borderColor: '#1e3a5f',
+                    backgroundColor: (ctx) => {
+                        const bg = ctx.chart.ctx.createLinearGradient(0,0,0,300);
+                        bg.addColorStop(0, 'rgba(30, 58, 95, 0.3)');
+                        bg.addColorStop(1, 'rgba(30, 58, 95, 0)');
+                        return bg;
+                    },
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#1e3a5f',
+                    pointBorderWidth: 3
+                }]
+            },
+            options: sharedOpts
+        });
+    </script>
+}

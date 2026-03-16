@@ -1,0 +1,144 @@
+@model Latog_Final_project.Models.InventoryViewModel
+
+<style>
+    .inv-table thead th {
+        background-color: #f8f9fa;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        border: none;
+        padding: 12px 15px;
+    }
+    .inv-table tbody td {
+        padding: 14px 15px;
+        vertical-align: middle;
+        border-top: 1px solid #f1f1f1;
+        color: #334155;
+    }
+    .inv-table tbody tr:hover {
+        background-color: #fafbfc;
+    }
+</style>
+
+<div class="table-responsive">
+    <table class="table inv-table align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th class="text-center" style="width:130px;">Current Stock</th>
+                <th class="text-center" style="width:120px;">Status</th>
+                <th class="text-center" style="width:220px;">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Items.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                        No inventory items found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.ItemName</td>
+
+                        <td class="text-center">
+                            <span class="fw-bold fs-5">@item.Quantity</span>
+                        </td>
+
+                        <!-- STOCK STATUS -->
+                        <td class="text-center">
+                            @if (item.Quantity == 0)
+                            {
+                                <span class="fw-bold" style="color: #dc2626; font-size: 0.82rem;">Out of Stock</span>
+                            }
+                            else if (item.Quantity <= 5)
+                            {
+                                <span class="fw-bold" style="color: #d97706; font-size: 0.82rem;">Low Stock</span>
+                            }
+                            else
+                            {
+                                <span class="fw-bold" style="color: #059669; font-size: 0.82rem;">In Stock</span>
+                            }
+                        </td>
+
+                        <!-- ACTIONS -->
+                        <td class="text-center">
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a asp-action="StockOut"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-outline-danger btn-sm px-3 fw-bold" style="border-radius: 6px; min-width: 95px;">
+                                    <i class="bi bi-box-arrow-up me-1"></i> Stock-Out
+                                </a>
+
+                                <a asp-action="StockAdjust"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-outline-primary btn-sm px-3 fw-bold" style="border-radius: 6px; min-width: 85px;">
+                                    <i class="bi bi-wrench me-1"></i> Adjust
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-3 rounded shadow-sm border">
+        <div class="text-muted small">
+            Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <!-- PREVIOUS -->
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" 
+                       asp-action="Index" 
+                       asp-route-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                <!-- PAGE NUMBERS -->
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" 
+                           asp-action="Index" 
+                           asp-route-page="@i">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <!-- NEXT -->
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" 
+                       asp-action="Index" 
+                       asp-route-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

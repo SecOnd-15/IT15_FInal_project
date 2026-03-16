@@ -1,0 +1,288 @@
+﻿@model Latog_Final_project.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "System Control Center";
+}
+
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --premium-primary: #0f172a;
+        --premium-accent: #6366f1;
+        --premium-bg: #f8fafc;
+        --premium-card-bg: #ffffff;
+        --premium-text-main: #1e293b;
+        --premium-text-muted: #64748b;
+        --premium-border: #e2e8f0;
+        --premium-success: #10b981;
+        --premium-warning: #f59e0b;
+        --premium-danger: #ef4444;
+        --premium-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--premium-bg);
+    }
+
+    .bi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding-top: 1rem;
+    }
+
+    .bi-title-group h1 { font-weight: 800; font-size: 2rem; letter-spacing: -0.04em; margin: 0; color: #0f172a; }
+    .bi-title-group p { color: var(--premium-text-muted); font-weight: 500; margin: 0.25rem 0 0; }
+
+    /* Glassmorphism KPI */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .metric-card {
+        background: var(--premium-card-bg);
+        border: 1px solid var(--premium-border);
+        border-radius: 1.25rem;
+        padding: 1.75rem;
+        box-shadow: var(--premium-shadow);
+        transition: transform 0.2s ease;
+    }
+
+    .metric-card:hover { transform: translateY(-5px); }
+    .metric-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--premium-text-muted); letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    .metric-value { font-size: 2.25rem; font-weight: 800; color: #0f172a; line-height: 1; }
+    .metric-trend { font-size: 0.8rem; font-weight: 600; margin-top: 0.75rem; display: flex; align-items: center; gap: 4px; }
+
+    /* Panels */
+    .bi-panel {
+        background: var(--premium-card-bg);
+        border: 1px solid var(--premium-border);
+        border-radius: 1.25rem;
+        padding: 1.75rem;
+        box-shadow: var(--premium-shadow);
+        height: 100%;
+    }
+
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .panel-title { font-weight: 800; font-size: 1.2rem; color: #0f172a; letter-spacing: -0.02em; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+    .timeline-item { position: relative; margin-bottom: 2rem; }
+    .timeline-item::before { content: ''; position: absolute; left: -2.35rem; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid var(--premium-accent); }
+    
+    .timeline-content h6 { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; color: #1e293b; }
+    .timeline-content p { font-size: 0.85rem; color: var(--premium-text-muted); margin-bottom: 0.5rem; line-height: 1.5; }
+    .timeline-meta { font-size: 0.75rem; font-weight: 600; color: var(--premium-accent); text-transform: uppercase; }
+
+    .badge-premium {
+        padding: 0.35rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+</style>
+
+<div class="container-fluid px-4 py-3">
+    <div class="bi-header">
+        <div class="bi-title-group">
+            <h1>Command Center</h1>
+            <p><i class="bi bi-cpu me-1"></i> Global System Intelligence Dashboard</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <!-- Filter Form -->
+            <form method="get" asp-action="Dashboard" class="d-flex align-items-center gap-2">
+                <select name="month" class="form-select form-select-sm rounded-pill px-3 fw-bold border-dark shadow-sm" style="width: auto; background-color: #f8fafc;" onchange="this.form.submit()">
+                    <option value="">All Months</option>
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <option value="@i" selected="@(Model.FilterMonth == i)">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)</option>
+                    }
+                </select>
+
+                <select name="year" class="form-select form-select-sm rounded-pill px-3 fw-bold border-dark shadow-sm" style="width: auto; background-color: #f8fafc;" onchange="this.form.submit()">
+                    <option value="">All Years</option>
+                    @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+                    {
+                        <option value="@y" selected="@(Model.FilterYear == y)">@y</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm" style="color: white; height: 42px;">Filter</button>
+            </form>
+
+            <div class="vr mx-1" style="height: 30px;"></div>
+
+            <a href="@Url.Action("AuditLog", "SuperAdmin")" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center justify-content-center" style="height: 42px;">
+                <i class="bi bi-terminal me-2"></i> Logs
+            </a>
+            <a href="#" class="btn btn-secondary rounded-pill px-4 shadow-sm fw-bold d-flex align-items-center" style="height: 42px;">
+                <i class="bi bi-gear me-2"></i> Dashboard Settings
+            </a>
+            <button class="btn btn-outline-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;" onclick="location.reload()" title="Refresh Dashboard">
+                <i class="bi bi-arrow-clockwise fs-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="metric-grid">
+        <div class="metric-card">
+            <div class="metric-label">Global User Base</div>
+            <div class="metric-value">@Model.TotalUsers</div>
+            <div class="metric-trend text-success"><i class="bi bi-graph-up"></i> Active System</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Active Barangays</div>
+            <div class="metric-value">@Model.TotalBranches</div>
+            <div class="metric-trend text-primary"><i class="bi bi-geo-alt"></i> Unified Network</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Total Audit Events</div>
+            <div class="metric-value">@Model.TotalTransactions</div>
+            <div class="metric-trend text-warning"><i class="bi bi-shield-check"></i> Integrity Verified</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">System Health</div>
+            <div class="metric-value">99.9%</div>
+            <div class="metric-trend text-success"><i class="bi bi-check-circle"></i> Operational</div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Row -->
+    <div class="row g-4 mb-4">
+        <!-- Global Activity Wave -->
+        <div class="col-lg-8">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Global System Activity Wave</h2>
+                    <div class="badge-premium bg-dark text-white">Last 30 Days</div>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="globalActivityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role distribution -->
+        <div class="col-lg-4">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">User Privilege Core</h2>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="roleDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Branch Comparison -->
+        <div class="col-lg-12">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Barangay Activity Comparison</h2>
+                </div>
+                <div style="height: 450px;">
+                    <canvas id="branchComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        // Shared Options
+        const sharedOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        };
+
+        // 1. Global Activity (Area)
+        new Chart(document.getElementById('globalActivityChart'), {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.GlobalSystemActivity.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.GlobalSystemActivity.Select(d => d.Value))),
+                    borderColor: '#6366f1',
+                    backgroundColor: (ctx) => {
+                        const bg = ctx.chart.ctx.createLinearGradient(0,0,0,300);
+                        bg.addColorStop(0, 'rgba(99, 102, 241, 0.2)');
+                        bg.addColorStop(1, 'rgba(99, 102, 241, 0)');
+                        return bg;
+                    },
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 4,
+                    pointRadius: 0,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: sharedOpts
+        });
+
+        // 2. Role Distribution (Doughnut)
+        new Chart(document.getElementById('roleDistributionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.UserRoleDistribution.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.UserRoleDistribution.Select(d => d.Value))),
+                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#0f172a'],
+                    borderWidth: 8,
+                    borderColor: '#fff',
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { padding: 30, usePointStyle: true, font: { weight: '800', family: 'Inter', size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // 3. Branch Activity (Horizontal Bar)
+        new Chart(document.getElementById('branchComparisonChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.BranchActivity.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.BranchActivity.Select(d => d.Value))),
+                    backgroundColor: '#1e293b',
+                    borderRadius: 10,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                ...sharedOpts
+            }
+        });
+    </script>
+}

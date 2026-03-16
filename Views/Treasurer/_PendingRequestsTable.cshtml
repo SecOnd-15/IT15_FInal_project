@@ -1,0 +1,119 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+
+<div class="table-responsive">
+    <table class="table custom-table">
+        <thead>
+            <tr>
+                <th>Requester</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Purpose</th>
+                <th>Date Requested</th>
+                <th>Category Selection</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Requests.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        No pending requests found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Requests)
+                {
+                    <tr>
+                        <td class="small">@(item.User?.FullName ?? "Unknown User")</td>
+                        <td class="fw-bold">@item.ItemName</td>
+                        <td class="fw-bold text-primary">@item.Quantity</td>
+                        <td>@item.Purpose</td>
+                        <td>@item.RequestDate.ToShortDateString()</td>
+                        <td style="min-width: 180px;">
+                            <form asp-action="ForwardToChairman" method="post" id="forwardForm-@item.Id">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <select name="Category" class="form-select form-select-sm border-warning shadow-sm" required style="border-radius: 6px;">
+                                    <option value="">-- Select Budget --</option>
+                                    @if (ViewBag.Categories != null)
+                                    {
+                                        foreach (var cat in (List<Latog_Final_project.Models.Budget>)ViewBag.Categories)
+                                        {
+                                            <option value="@cat.CategoryName">@cat.CategoryName</option>
+                                        }
+                                    }
+                                </select>
+                            </form>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="submit" form="forwardForm-@item.Id" class="btn btn-warning btn-sm px-3 shadow-sm" style="font-weight: 600; font-size: 0.8rem; border-radius: 4px;">
+                                    <i class="bi bi-shield-check me-1"></i> Forward
+                                </button>
+                                
+                                <form asp-action="RejectResourceRequest" method="post" onsubmit="return confirm('Are you sure you want to reject this request?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm px-3 shadow-sm" style="font-weight: 600; font-size: 0.8rem; border-radius: 4px;">
+                                        <i class="bi bi-x-circle me-1"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-3 rounded shadow-sm border">
+        <div class="text-muted small">
+            Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" 
+                       asp-action="@Model.ActionName" 
+                       asp-route-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" 
+                           asp-action="@Model.ActionName" 
+                           asp-route-page="@i">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" 
+                       asp-action="@Model.ActionName" 
+                       asp-route-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

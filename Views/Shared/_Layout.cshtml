@@ -1,0 +1,701 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Latog_Final_project.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject Latog_Final_project.Services.IBranchService BranchService
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - IRP System</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #FFC107, #ffca2c);
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            padding: 10px 20px 20px 20px;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+            .sidebar h5 {
+                font-weight: bold;
+                color: #212529;
+            }
+
+            .sidebar .nav-link {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: #212529;
+                font-weight: 600;
+                border-radius: 10px;
+                padding: 12px;
+                margin-bottom: 6px;
+                transition: 0.25s ease;
+            }
+
+                .sidebar .nav-link:hover {
+                    background-color: white;
+                    color: #FFC107 !important;
+                    transform: translateX(5px);
+                }
+
+                .sidebar .nav-link.active {
+                    background-color: white;
+                    color: #FFC107 !important;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+
+        /* PROFILE CARD AT BOTTOM */
+        .sidebar-profile {
+            padding: 15px 20px;
+            border-top: 1px solid #f0f0f0;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+
+        .profile-avatar {
+            width: 35px;
+            height: 35px;
+            background: #ffc107;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .profile-name {
+            font-weight: 700;
+            color: #333;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .profile-role {
+            font-size: 0.75rem;
+            color: #777;
+        }
+
+        /* OVERLAY */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+            .overlay.active {
+                display: block;
+            }
+
+        /* MAIN CONTENT OVERFLOW */
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            padding: 30px;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        /* MOBILE TOP BAR */
+        .mobile-top-bar {
+            display: none;
+            background: #fff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* MOBILE ADAPTATIONS */
+        @@media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .mobile-top-bar {
+                display: flex;
+            }
+
+            .sidebar-toggle-desktop {
+                display: none;
+            }
+        }
+
+        /* LOGOUT */
+        .logout-btn {
+            background: #dc3545;
+            border-radius: 8px;
+        }
+
+            .logout-btn:hover {
+                background: #bb2d3b;
+            }
+
+        /* YELLOW PAGINATION */
+        .pagination .page-item.active .page-link {
+            background-color: #FFC107 !important;
+            border-color: #FFC107 !important;
+            color: #212529 !important;
+            font-weight: bold;
+        }
+
+        .pagination .page-link {
+            color: #212529;
+            transition: 0.2s;
+        }
+
+            .pagination .page-link:hover {
+                background-color: rgba(255, 193, 7, 0.1);
+                color: #212529;
+            }
+
+        .pagination .page-item.disabled .page-link {
+            background-color: transparent;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="d-flex">
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <!-- OVERLAY -->
+            <div class="overlay" onclick="toggleSidebar()"></div>
+
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+
+                <div class="text-center mt-2 mb-1">
+                    <img src="~/images/irp-logo.png" alt="IRPMS Logo" style="max-width: 200px; height: auto;" />
+                </div>
+                <hr class="my-2" />
+
+                <ul class="nav flex-column">
+
+                    <!-- SUPERADMIN -->
+                    @if (User.IsInRole("SuperAdmin"))
+                    {
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
+                               asp-controller="SuperAdmin" asp-action="Dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SuperAdmin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" && (ViewBag.Mode == "admin") ? "active" : "")"
+                               asp-controller="SuperAdmin" asp-action="Index" asp-route-branchId="1" asp-route-mode="admin">
+                                <i class="bi bi-person-lock"></i> Admin Users
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLog" ? "active" : "")"
+                               asp-controller="SuperAdmin" asp-action="AuditLog">
+                                <i class="bi bi-shield-check"></i> Audit Log
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Branches" ? "active" : "")"
+                               asp-controller="SuperAdmin" asp-action="Branches">
+                                <i class="bi bi-building-gear"></i> Manage Barangays
+                            </a>
+                        </li>
+
+                    }
+
+                    <!-- CHAIRMAN -->
+                    @if (User.IsInRole("Chairman"))
+                    {
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chairman" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               asp-controller="Chairman" asp-action="Index">
+                                <i class="bi bi-person-badge"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chairman" && ViewContext.RouteData.Values["action"]?.ToString() == "ForApproval" ? "active" : "")"
+                               asp-controller="Chairman" asp-action="ForApproval">
+                                <i class="bi bi-check2-square"></i> For Approval
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chairman" && ViewContext.RouteData.Values["action"]?.ToString() == "RejectedCompleted" ? "active" : "")"
+                               asp-controller="Chairman" asp-action="RejectedCompleted">
+                                <i class="bi bi-x-circle"></i> Rejected / Done
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chairman" && ViewContext.RouteData.Values["action"]?.ToString() == "ArchivedList" ? "active" : "")"
+                               asp-controller="Chairman" asp-action="ArchivedList">
+                                <i class="bi bi-archive"></i> Archive
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chairman" && ViewContext.RouteData.Values["action"]?.ToString() == "Budgets" ? "active" : "")"
+                               asp-controller="Chairman" asp-action="Budgets">
+                                <i class="bi bi-wallet2"></i> Budget
+                            </a>
+                        </li>
+
+                    }
+
+                    <!-- TREASURER -->
+                    @if (User.IsInRole("Treasurer"))
+                    {
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="Index">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && (ViewContext.RouteData.Values["action"]?.ToString() == "Pending" || ViewContext.RouteData.Values["action"]?.ToString() == "PendingRequests") ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="PendingRequests">
+                                <i class="bi bi-hourglass-split"></i> Pending
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && ViewContext.RouteData.Values["action"]?.ToString() == "Approved" ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="Approved">
+                                <i class="bi bi-check-circle"></i> Approved
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && ViewContext.RouteData.Values["action"]?.ToString() == "PurchaseOrders" ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="PurchaseOrders">
+                                <i class="bi bi-receipt"></i> Purchase Orders
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && (ViewContext.RouteData.Values["action"]?.ToString() == "POReceipt" || ViewBag.ActiveMenu == "POReceipt") ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="POReceipt">
+                                <i class="bi bi-file-earmark-text"></i> PO Receipts
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && ViewContext.RouteData.Values["action"]?.ToString() == "Invoices" ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="Invoices">
+                                <i class="bi bi-receipt-cutoff"></i> Invoices
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               asp-controller="Inventory" asp-action="Index">
+                                <i class="bi bi-box-seam"></i> Inventory
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" && ViewContext.RouteData.Values["action"]?.ToString() == "Transactions" ? "active" : "")"
+                               asp-controller="Inventory" asp-action="Transactions">
+                                <i class="bi bi-clock-history"></i> Stock Transactions
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" && ViewContext.RouteData.Values["action"]?.ToString() == "ArchivedTransactions" ? "active" : "")"
+                               asp-controller="Inventory" asp-action="ArchivedTransactions">
+                                <i class="bi bi-archive"></i> Archived Transactions
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && (ViewContext.RouteData.Values["action"]?.ToString() == "ArchivedList" || ViewBag.ActiveMenu == "Archive") ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="ArchivedList">
+                                <i class="bi bi-archive"></i> Archive
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Treasurer" && ViewContext.RouteData.Values["action"]?.ToString() == "Budgets" ? "active" : "")"
+                               asp-controller="Treasurer" asp-action="Budgets">
+                                <i class="bi bi-wallet2"></i> Budget
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "AccountSettings" ? "active" : "")"
+                               asp-controller="AccountSettings" asp-action="ChangePassword">
+                                <i class="bi bi-person-gear"></i> My Profile
+                            </a>
+                        </li>
+                    }
+
+                    <!-- REGISTER (Chairman Only) -->
+                    @if (User.IsInRole("Chairman"))
+                    {
+                        <li class="mt-2"></li>
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["page"]?.ToString() == "/Account/Register" ? "active" : "")"
+                               asp-area="Identity"
+                               asp-page="/Account/Register">
+                                <i class="bi bi-person-check"></i> Account Users
+                            </a>
+                        </li>
+                    }
+
+                    <!-- STAFF -->
+                    @if (User.IsInRole("Staff"))
+                    {
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               asp-controller="Staff" asp-action="Index">
+                                <i class="bi bi-list-ul"></i> My Requests
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" && ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")"
+                               asp-controller="Staff" asp-action="Create">
+                                <i class="bi bi-plus-circle"></i> Add Request
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "AccountSettings" ? "active" : "")"
+                               asp-controller="AccountSettings" asp-action="ChangePassword">
+                                <i class="bi bi-person-gear"></i> My Profile
+                            </a>
+                        </li>
+                    }
+
+                </ul>
+
+                @{
+                    var branchNow = await BranchService.GetCurrentBranchAsync();
+                    var branchNameNow = branchNow?.BranchName ?? "Global / Super";
+
+                }
+
+                <div class="mt-auto border-top pt-2">
+                    <form asp-controller="Home" asp-action="Logout" method="post" id="logoutForm">
+                        <button type="submit" class="nav-link btn btn-link text-danger w-100 text-start border-0 px-3 py-2">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+
+
+
+        <!-- MAIN -->
+        <div class="main-content flex-fill" id="main-content-wrapper">
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <!-- MOBILE NAV BAR -->
+                <div class="mobile-top-bar d-md-none mb-3">
+                    <button class="btn btn-warning" onclick="toggleSidebar()">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <span class="fw-bold">IRP System</span>
+                    <div style="width: 40px;"></div> <!-- Spacer for centering -->
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ✅ SWEET ALERT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- ✅ GLOBAL POPUP -->
+    <script>
+        function initPopups() {
+            var successMessage = '@TempData["Success"]';
+            if (successMessage && successMessage !== '') {
+                Swal.fire({
+                    icon: 'success',
+                    title: '🎉 Success!',
+                    text: successMessage,
+                    confirmButtonColor: '#28a745'
+                });
+            }
+
+            var errorMessage = '@TempData["Error"]';
+            if (errorMessage && errorMessage !== '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops!',
+                    text: errorMessage,
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+
+            var warningMessage = '@TempData["Warning"]';
+            if (warningMessage && warningMessage !== '') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Email Notification',
+                    text: warningMessage,
+                    confirmButtonColor: '#f39c12'
+                });
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", initPopups);
+        document.addEventListener("turbo:load", initPopups);
+    </script>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.overlay');
+            if (sidebar) sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
+        }
+
+        // ✅ GLOBAL AJAX PAGINATION
+        // Using delegation to catch all clicks on pagination links within our target container
+        document.addEventListener("click", function (e) {
+            // Find the closest anchor tag
+            const link = e.target.closest("a.page-link");
+            if (!link) return;
+
+            // Check if this link is inside an AJAX pagination container
+            const container = link.closest("#ajax-pagination-container");
+            if (!container) return;
+
+            // Stop the browser from performing a full page refresh
+            e.preventDefault();
+
+            const url = link.getAttribute("href");
+            if (!url || url === "#") return;
+
+            // Show loading state
+            container.style.opacity = "0.5";
+            container.style.pointerEvents = "none";
+
+            fetch(url, {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.text();
+            })
+            .then(html => {
+                // Update the container content
+                container.innerHTML = html;
+                
+                // Restore interactivity
+                container.style.opacity = "1";
+                container.style.pointerEvents = "auto";
+                
+                // Update URL in browser without refresh
+                window.history.pushState(null, "", url);
+                
+                // OPTIONAL: Smoothly stay near the table if the content height changed dramatically
+                // We don't want to jump to the top of the page.
+            })
+            .catch(err => {
+                console.error("Pagination error:", err);
+                // Fallback: If AJAX fails, we could potentially force a refresh, 
+                // but usually staying on current page with an error is better.
+                container.style.opacity = "1";
+                container.style.pointerEvents = "auto";
+            });
+        });
+
+        // ✅ GLOBAL LIVE DASHBOARD COUNTER
+        function updateDashboardStats() {
+            fetch('/Home/GetDashboardStats')
+                .then(response => {
+                    if (!response.ok) return;
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) return;
+
+                    // Shared/SuperAdmin/Chairman IDs
+                    if (data.pendingRequests !== undefined) updateElement('live-pending-requests', data.pendingRequests);
+                    if (data.approvedRequests !== undefined) updateElement('live-approved-requests', data.approvedRequests);
+                    if (data.rejectedRequests !== undefined) updateElement('live-rejected-requests', data.rejectedRequests);
+                    if (data.totalUsers !== undefined) updateElement('live-total-users', data.totalUsers);
+                    if (data.totalAuditLogs !== undefined) updateElement('live-total-audit', data.totalAuditLogs);
+
+                    // Chairman specific IDs
+                    if (data.pendingApprovals !== undefined) updateElement('live-pending-approvals', data.pendingApprovals);
+                    if (data.totalRequests !== undefined) updateElement('live-total-requests', data.totalRequests);
+                    if (data.totalSpending !== undefined) updateElement('live-total-spending', data.totalSpending.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }));
+                    if (data.paidInvoices !== undefined) updateElement('live-paid-invoices', data.paidInvoices);
+
+                    // Treasurer specific IDs
+                    if (data.pendingRequests !== undefined) updateElement('live-pending-requests', data.pendingRequests);
+                    if (data.unpaidInvoices !== undefined) updateElement('live-unpaid-invoices', data.unpaidInvoices);
+                    if (data.unpaidAmount !== undefined) updateElement('live-unpaid-amount', data.unpaidAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }));
+                    if (data.paidAmount !== undefined) updateElement('live-paid-amount', data.paidAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }));
+                    if (data.totalRevenue !== undefined) updateElement('live-total-revenue', data.totalRevenue.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }));
+
+                    // Staff specific IDs
+                    if (data.myPendingRequests !== undefined) updateElement('live-my-pending', data.myPendingRequests);
+                    if (data.myTotalRequests !== undefined) updateElement('live-my-total', data.myTotalRequests);
+                })
+                .catch(err => console.error("Stats update error:", err));
+        }
+
+        function updateElement(id, value) {
+            const el = document.getElementById(id);
+            if (el && el.innerText != value) {
+                el.innerText = value;
+                // Subtle flash effect
+                el.style.transition = '0.3s';
+                el.style.color = '#f4c430'; 
+                setTimeout(() => { el.style.color = ''; }, 500);
+            }
+        }
+
+        let dashboardIntervalId = null;
+        
+        function initDashboard() {
+            if (dashboardIntervalId) {
+                clearInterval(dashboardIntervalId);
+            }
+            if (document.getElementById('is-dashboard-page')) {
+                updateDashboardStats();
+                dashboardIntervalId = setInterval(updateDashboardStats, 15000);
+            }
+        }
+
+        // Run on initial load and turbo transitions
+        document.addEventListener("DOMContentLoaded", initDashboard);
+        document.addEventListener("turbo:load", initDashboard);
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- ✅ GLOBAL AJAX FORM HANDLER -->
+    <script>
+        document.addEventListener('submit', async function(e) {
+            if (!e.target.classList.contains('ajax-form')) return;
+            
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = btn ? btn.innerHTML : '';
+            
+            if (btn) {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+                btn.disabled = true;
+            }
+
+            try {
+                const url = new URL(form.action || window.location.href);
+                const formData = new FormData(form);
+                const searchParams = new URLSearchParams(formData);
+                url.search = searchParams.toString();
+
+                const response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                
+                if (!response.ok) throw new Error("Server error");
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newContent = doc.getElementById('main-content-wrapper');
+                const oldContent = document.getElementById('main-content-wrapper');
+                
+                if (newContent && oldContent) {
+                    oldContent.innerHTML = newContent.innerHTML;
+                    window.history.pushState(null, "", url);
+                    
+                    // Re-evaluate scripts in the new content
+                    const newScripts = oldContent.querySelectorAll('script');
+                    newScripts.forEach(script => {
+                        const newScript = document.createElement('script');
+                        if (script.src) newScript.src = script.src;
+                        else newScript.textContent = script.textContent;
+                        document.body.appendChild(newScript);
+                        // Optional: remove after running to keep DOM clean
+                        setTimeout(() => newScript.remove(), 100);
+                    });
+                }
+            } catch (err) {
+                console.error("AJAX form submission failed:", err);
+                // Fallback to normal submission
+                form.submit();
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalBtnHtml;
+                    btn.disabled = false;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

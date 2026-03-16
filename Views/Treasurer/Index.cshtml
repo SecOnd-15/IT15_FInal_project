@@ -1,0 +1,486 @@
+﻿@model Latog_Final_project.Models.TreasurerDashboardViewModel
+
+@{
+    ViewData["Title"] = "Business Intelligence Dashboard";
+}
+
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --premium-primary: #3b82f6;
+        --premium-secondary: #6366f1;
+        --premium-bg: #f8fafc;
+        --premium-card-bg: #ffffff;
+        --premium-text-main: #1e293b;
+        --premium-text-muted: #64748b;
+        --premium-border: #e2e8f0;
+        --premium-success: #10b981;
+        --premium-warning: #f59e0b;
+        --premium-danger: #ef4444;
+        --premium-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --premium-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--premium-bg);
+        color: var(--premium-text-main);
+    }
+
+    /* ===== HEADER ===== */
+    .bi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .bi-title-group h1 {
+        font-weight: 800;
+        font-size: 1.75rem;
+        margin: 0;
+        letter-spacing: -0.025em;
+    }
+
+    .bi-title-group p {
+        color: var(--premium-text-muted);
+        font-weight: 500;
+        margin: 0.25rem 0 0;
+    }
+
+    /* ===== METRIC CARDS ===== */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .metric-card {
+        background: var(--premium-card-bg);
+        border: 1px solid var(--premium-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--premium-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .metric-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-color, var(--premium-primary));
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--premium-text-muted);
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-sub {
+        font-size: 0.825rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .trend-up { color: var(--premium-success); }
+    .trend-down { color: var(--premium-danger); }
+
+    /* ===== PANELS ===== */
+    .bi-panel {
+        background: var(--premium-card-bg);
+        border: 1px solid var(--premium-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--premium-shadow);
+        height: 100%;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .panel-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    /* ===== CHARTS ===== */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        min-height: 300px;
+    }
+
+    /* ===== TABLE ===== */
+    .bi-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 0.5rem;
+    }
+
+    .bi-table th {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--premium-text-muted);
+        text-transform: uppercase;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--premium-border);
+    }
+
+    .bi-table td {
+        padding: 1rem 0.75rem;
+        background: #fff;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .progress-bar-container {
+        width: 100px;
+        height: 6px;
+        background: var(--premium-bg);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: var(--premium-primary);
+        border-radius: 10px;
+    }
+
+    /* Filter UI */
+    .bi-filter-btn {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        transition: all 0.2s;
+    }
+
+    .bi-filter-btn:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+    }
+
+    .date-input {
+        border: 1px solid var(--premium-border);
+        border-radius: 0.75rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+</style>
+
+@inject Latog_Final_project.Services.IBranchService BranchService
+
+<div class="container-fluid px-4 py-4">
+    @{
+        var branch = await BranchService.GetCurrentBranchAsync();
+        var branchName = branch?.BranchName ?? "Your Barangay";
+    }
+
+    <!-- ===== HEADER SECTION ===== -->
+    <div class="bi-header">
+        <div class="bi-title-group">
+            <h1>Business Intelligence</h1>
+            <p><i class="bi bi-calendar3 me-1"></i> @DateTime.Now.ToString("dddd, MMMM d, yyyy") · @branchName Dashboard</p>
+        </div>
+        <form method="get" asp-action="Index" class="d-flex align-items-center gap-3 ajax-form">
+            <div class="d-flex align-items-center gap-2 bg-white p-2 border rounded-3 shadow-sm">
+                <input type="date" name="startDate" class="date-input border-0" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.AddDays(-7).ToString("yyyy-MM-dd"))">
+                <span class="text-muted small fw-bold">to</span>
+                <input type="date" name="endDate" class="date-input border-0" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))">
+            </div>
+            <button type="submit" class="bi-filter-btn">Filter</button>
+        </form>
+    </div>
+
+    <!-- ===== KPI STATS ===== -->
+    <div class="metric-grid">
+        <div class="metric-card" style="--accent-color: #3b82f6;">
+            <div class="metric-label">Gross Operating Volume</div>
+            <div class="metric-value">₱@Model.TotalSpending.ToString("N0")</div>
+            <div class="metric-sub trend-up">
+                <i class="bi bi-arrow-up-right"></i> 12.5% vs Last Week
+            </div>
+        </div>
+        <div class="metric-card" style="--accent-color: #10b981;">
+            <div class="metric-label">Average Order Value</div>
+            <div class="metric-value">₱@((Model.TotalInvoices > 0 ? Model.TotalSpending/Model.TotalInvoices : 0).ToString("N2"))</div>
+            <div class="metric-sub" style="color: #10b981;">
+                <i class="bi bi-shield-check"></i> Unit Efficiency
+            </div>
+        </div>
+        <div class="metric-card" style="--accent-color: #ef4444;">
+            <div class="metric-label">Critical Stock Alerts</div>
+            <div class="metric-value">@Model.OverdueInvoices</div>
+            <div class="metric-sub trend-down">
+                <i class="bi bi-exclamation-triangle"></i> Immediate Action Needed
+            </div>
+        </div>
+        <div class="metric-card" style="--accent-color: #f59e0b;">
+            <div class="metric-label">Active Items Turn</div>
+            <div class="metric-value">@Model.CategoryDistribution.Count</div>
+            <div class="metric-sub" style="color: #f59e0b;">
+                <i class="bi bi-box-seam"></i> Managed Categories
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN CHARTS SECTION ===== -->
+    <div class="row g-4 mb-4">
+        <!-- Sales Volume Bar Chart -->
+        <div class="col-lg-7">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Resource Volume History</h2>
+                    <span class="text-muted small fw-bold">Unit Request History</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doughnut Chart -->
+        <div class="col-lg-5">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Operational Spending Insights</h2>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Revenue Overview Area Chart -->
+        <div class="col-lg-7">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Budget Utilization Overview</h2>
+                    <a href="#" class="text-primary small fw-bold text-decoration-none">Analytics →</a>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Peak Hours Bar Chart -->
+        <div class="col-lg-5">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">System Throughput Analysis</h2>
+                    <span class="text-muted small fw-bold">(Peak Request Hours)</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="peakChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTTOM SECTION: TABLES & LOGS ===== -->
+    <div class="row g-4">
+        <!-- Top Performing Products -->
+        <div class="col-lg-8">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Top Performing Resource Items</h2>
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-link text-success p-0 small fw-bold text-decoration-none"><i class="bi bi-envelope me-1"></i> Email Report</button>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold"><i class="bi bi-download me-1"></i> Export CSV</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="bi-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Total Units</th>
+                                <th>Volume Value</th>
+                                <th>Activity Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.TopProducts)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.TotalSold UNITS</td>
+                                    <td class="fw-bold">₱@item.RevenueGenerated.ToString("N2")</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress-bar-container">
+                                                <div class="progress-bar" style="width: @item.Progress%"></div>
+                                            </div>
+                                            <span class="small fw-bold">@item.Progress%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="col-lg-4">
+            <div class="bi-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Recent Operational Logs</h2>
+                    <a href="#" class="text-primary small fw-bold text-decoration-none">Full Audit →</a>
+                </div>
+                <div class="bi-logs">
+                    @foreach (var invoice in Model.PendingPayments.Take(3))
+                    {
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded-3 mb-2 bg-light">
+                            <div>
+                                <div class="small fw-bold text-muted">#ID-@invoice.Id.ToString("X")</div>
+                                <div class="fw-bold text-primary">₱@invoice.TotalAmount.ToString("N2")</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-white text-success border border-success small rounded-pill px-2">UNPAID</span>
+                                <div class="small text-muted mt-1">@invoice.CreatedDate.ToString("hh:mm tt")</div>
+                            </div>
+                        </div>
+                    }
+                    @if (!Model.PendingPayments.Any())
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-check-circle-fill text-success d-block mb-2" style="font-size: 2rem;"></i>
+                            Operational Integrity is optimal.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+       
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        };
+
+      
+        new Chart(document.getElementById('volumeChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.ItemVolumeData.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.ItemVolumeData.Select(d => d.Value))),
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 8,
+                    barThickness: 32
+                }]
+            },
+            options: commonOptions
+        });
+
+    
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.CategoryDistribution.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.CategoryDistribution.Select(d => d.Value))),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+                    borderWidth: 0,
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { padding: 20, usePointStyle: true, font: { weight: '600' } }
+                    }
+                }
+            }
+        });
+
+
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.SpendingChartData.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.SpendingChartData.Select(d => d.Value))),
+                    borderColor: '#3b82f6',
+                    backgroundColor: (context) => {
+                        const bg = context.chart.ctx.createLinearGradient(0, 0, 0, 400);
+                        bg.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+                        bg.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                        return bg;
+                    },
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 4,
+                    pointRadius: 0
+                }]
+            },
+            options: commonOptions
+        });
+
+       
+        new Chart(document.getElementById('peakChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.PeakHoursData.Select(d => d.Label))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.PeakHoursData.Select(d => d.Value))),
+                    backgroundColor: '#111827',
+                    borderRadius: 4
+                }]
+            },
+            options: commonOptions
+        });
+    </script>
+}

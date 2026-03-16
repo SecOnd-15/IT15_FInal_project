@@ -1,0 +1,15 @@
+@model Latog_Final_project.Models.InventoryTransactionViewModel
+
+@{
+    ViewData["Title"] = "Stock Transactions";
+}
+
+<h2 class="mb-4 fw-bold"><i class="bi bi-clock-history"></i> Stock Transaction History</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="ajax-pagination-container">
+            @await Html.PartialAsync("_TransactionsTable", Model)
+        </div>
+    </div>
+</div>

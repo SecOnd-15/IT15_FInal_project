@@ -1,0 +1,102 @@
+@model Latog_Final_project.Models.AccountRequestFilterViewModel
+
+<div class="table-responsive">
+    <table class="request-table">
+        <thead>
+            <tr>
+                <th>FullName</th>
+                <th>Email</th>
+                <th>Date Requested</th>
+                <th>Status</th>
+                @if (!User.IsInRole("SuperAdmin"))
+                {
+                    <th>Actions</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Requests.Any())
+            {
+                <tr>
+                    <td colspan="@(User.IsInRole("SuperAdmin") ? 4 : 5)">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox d-block mb-2" style="font-size: 2rem;"></i>
+                            No requests found.
+                        </div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Requests)
+                {
+                    <tr>
+                        <td>@item.FullName</td>
+                        <td>@item.Email</td>
+                        <td>@item.DateRequested.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <span class="badge @(item.Status switch { "Pending" => "b-pending", "Approved" => "b-approved", "Rejected" => "b-rejected", _ => "b-default" })">
+                                @item.Status
+                            </span>
+                        </td>
+                        @if (!User.IsInRole("SuperAdmin"))
+                        {
+                            <td>
+                                <div class="d-flex gap-2">
+                                    @if (item.Status == "Pending")
+                                    {
+                                        <form asp-action="Approve" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn-approve">Approve</button>
+                                        </form>
+                                        <form asp-action="Reject" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn-reject">Reject</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Processed</span>
+                                    }
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            Showing <strong>@Model.Requests.Count</strong> of <strong>@Model.TotalRecords</strong> records
+        </div>
+        
+        <ul class="pagination">
+            <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-status="@Model.StatusFilter" asp-route-page="@(Model.PageNumber - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-status="@Model.StatusFilter" asp-route-page="@i">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-status="@Model.StatusFilter" asp-route-page="@(Model.PageNumber + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+}

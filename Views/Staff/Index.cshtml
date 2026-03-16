@@ -1,0 +1,53 @@
+﻿@model Latog_Final_project.Models.StaffRequestsViewModel
+@inject Latog_Final_project.Services.IBranchService BranchService
+@{
+    var branch = await BranchService.GetCurrentBranchAsync();
+    var branchName = branch?.BranchName ?? "Your Barangay";
+    ViewData["Title"] = "Resource Requests";
+}
+
+<div id="is-dashboard-page" style="display:none;"></div>
+<div class="breadcrumb-text text-muted mb-1 small uppercase fw-bold" style="letter-spacing: 1px;">@branchName / STAFF / DASHBOARD</div>
+<div class="bi-header mb-4">
+    <div class="bi-title-group">
+        <h1 style="font-weight: 800; font-size: 1.75rem; color: #1e293b; letter-spacing: -0.025em; margin: 0;">Business Intelligence</h1>
+        <p style="color: #64748b; font-weight: 500; margin: 0.25rem 0 0;"><i class="bi bi-calendar3 me-1"></i> @DateTime.Now.ToString("dddd, MMMM d, yyyy") · @branchName Dashboard</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm" style="background: rgba(243, 156, 18, 0.1); border-left: 4px solid #f39c12 !important;">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="me-3 fs-3 text-warning">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <div class="fw-bold fs-4" id="live-my-pending">@Model.Requests.Count(r => r.Status == "Pending" || r.Status == "Pending Treasurer Review")</div>
+                    <div class="text-muted small text-uppercase fw-bold">My Pending</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm" style="background: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db !important;">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="me-3 fs-3 text-primary">
+                    <i class="bi bi-list-columns-reverse"></i>
+                </div>
+                <div>
+                    <div class="fw-bold fs-4" id="live-my-total">@Model.TotalRecords</div>
+                    <div class="text-muted small text-uppercase fw-bold">My Total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div id="ajax-pagination-container">
+            @await Html.PartialAsync("_StaffRequestsTable", Model)
+        </div>
+    </div>
+</div>

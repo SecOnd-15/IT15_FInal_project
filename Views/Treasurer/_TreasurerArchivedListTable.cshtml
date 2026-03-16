@@ -1,0 +1,156 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+@{ var currentFilter = ViewBag.CurrentFilter as string ?? "all"; }
+
+<style>
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+    .status-active { background-color: #e0f2fe; color: #0369a1; }
+    .status-completed { background-color: #d1fae5; color: #065f46; }
+    .status-pending { background-color: #fef08a; color: #854d0e; }
+    .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Requester</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Supplier</th>
+                <th>Amount</th>
+                <th>Archived Date</th>
+                <th>Status</th>
+                <th style="width:180px;">Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Requests.Any())
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        No archived records found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Requests)
+                {
+                    <tr>
+                        <td class="small">@(item.User?.FullName ?? "Unknown User")</td>
+                        <td class="fw-semibold">@item.ItemName</td>
+                        <td>
+                            <span class="badge bg-light text-dark border small">@item.Category</span>
+                            <div class="text-muted small mt-1">
+                                @if (item.ReceivedQuantity != null)
+                                {
+                                    <text>PO Receipt</text>
+                                }
+                                else if (item.HasPurchaseOrder)
+                                {
+                                    <text>Purchase Order</text>
+                                }
+                            </div>
+                        </td>
+                        <td>@item.Supplier</td>
+                        <td class="text-success fw-semibold">
+                            ₱ @item.TotalAmount?.ToString("N2")
+                        </td>
+                        <td>
+                            <div class="small">@item.ArchivedDate?.ToString("MMM dd, yyyy")</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">@item.ArchivedDate?.ToString("hh:mm tt")</div>
+                        </td>
+                        <td>
+                            @if (item.Status == "Completed" || item.Status == "Delivered")
+                            {
+                                <span class="fw-bold" style="color: #059669; font-size: 0.82rem;">@item.Status</span>
+                            }
+                            else if (item.Status == "Cancelled" || item.Status == "Declined" || item.Status == "Rejected")
+                            {
+                                <span class="fw-bold" style="color: #dc2626; font-size: 0.82rem;">@item.Status</span>
+                            }
+                            else if (item.Status == "Approved")
+                            {
+                                <span class="fw-bold" style="color: #0369a1; font-size: 0.82rem;">@item.Status</span>
+                            }
+                            else
+                            {
+                                <span class="fw-bold" style="color: #d97706; font-size: 0.82rem;">@item.Status</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <a asp-action="ViewReceipt"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-primary btn-sm shadow-sm" style="border-radius: 4px; font-weight: 500;">
+                                    <i class="bi bi-eye-fill"></i> View
+                                </a>
+
+                                <form asp-action="Unarchive" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit"
+                                            class="btn btn-warning btn-sm w-100 shadow-sm"
+                                            style="border-radius: 4px; font-weight: 500;"
+                                            onclick="return confirm('Restore this request from archive?');">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Unarchive
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-3 rounded shadow-sm border">
+        <div class="text-muted small">
+            Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber - 1)" asp-route-filter="@currentFilter">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@i" asp-route-filter="@currentFilter">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber + 1)" asp-route-filter="@currentFilter">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

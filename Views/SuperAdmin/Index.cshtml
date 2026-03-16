@@ -1,0 +1,180 @@
+@model List<Latog_Final_project.Models.ApplicationUser>
+
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<style>
+    :root {
+        --primary-yellow: #f4c430;
+        --dark-yellow: #e0b400;
+        --text-dark: #2b2b2b;
+    }
+
+    h2 {
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+    }
+
+    .card-wrapper {
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .table thead {
+        background-color: var(--primary-yellow);
+        color: var(--text-dark);
+    }
+
+    .btn-assign {
+        background-color: var(--primary-yellow);
+        color: var(--text-dark);
+        border: none;
+        font-weight: 600;
+    }
+
+        .btn-assign:hover {
+            background-color: var(--dark-yellow);
+        }
+
+    .role-badge {
+        background-color: #fff7cc;
+        color: #856404;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container mt-4">
+
+    @if (ViewBag.SelectedBranchId == null)
+    {
+        @* This state is now handled by the Branches view *@
+        <script>window.location.href = '@Url.Action("Branches", "SuperAdmin")';</script>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        @if (ViewBag.SelectedBranchId != 0 && ViewBag.Mode != "admin")
+                        {
+                            <li class="breadcrumb-item"><a asp-action="Branches" class="text-decoration-none text-warning fw-bold">Barangay Management</a></li>
+                        }
+                        <li class="breadcrumb-item active" aria-current="page">@ViewBag.SelectedBranchName</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0">@(ViewBag.Mode == "admin" ? "Admin Users" : ViewBag.SelectedBranchName + " Users")</h2>
+            </div>
+            <div class="d-flex gap-2">
+                @if (ViewBag.Mode == "admin")
+                {
+                    <a asp-action="AddAdmin" class="btn btn-warning fw-bold" style="border-radius: 10px;">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add New Admin
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="Branches" class="btn btn-outline-secondary fw-bold" style="border-radius: 10px;">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Barangays
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- 🔍 SEARCH / FILTER -->
+        <form method="get" class="row g-2 align-items-center mb-4">
+            <input type="hidden" name="branchId" value="@ViewBag.SelectedBranchId" />
+            @if (ViewBag.Mode == "admin")
+            {
+                <input type="hidden" name="mode" value="admin" />
+            }
+            <div class="col-md-4">
+                <input type="text" name="search" value="@ViewBag.Search" class="form-control" style="border-radius: 10px;" placeholder="Search by email" />
+            </div>
+
+            @if (ViewBag.Mode != "admin")
+            {
+                <div class="col-md-3">
+                    <select name="role" class="form-select" style="border-radius: 10px;">
+                        <option value="">All Positions</option>
+                        <option value="Chairman" selected="@(ViewBag.Role == "Chairman")">Chairman</option>
+                        <option value="Secretary" selected="@(ViewBag.Role == "Secretary")">Secretary</option>
+                        <option value="Treasurer" selected="@(ViewBag.Role == "Treasurer")">Treasurer</option>
+                    </select>
+                </div>
+            }
+
+            <div class="col-md-2 d-flex">
+                <button type="submit" class="btn btn-warning fw-bold w-100 me-2" style="border-radius: 10px;">Search</button>
+                <a asp-action="Index" asp-route-branchId="@ViewBag.SelectedBranchId" asp-route-mode="@ViewBag.Mode" class="btn btn-light border fw-bold w-100" style="border-radius: 10px;">Reset</a>
+            </div>
+        </form>
+
+        <!-- 📋 USER TABLE -->
+        <div class="card-wrapper shadow-none border">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-3">User Information</th>
+                            @if (ViewBag.SelectedBranchId != null)
+                            {
+                                <th>Current Position</th>
+                            }
+                            <th class="text-center" style="width: 250px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">No users found for this selection.</td>
+                            </tr>
+                        }
+                        @foreach (var user in Model)
+                        {
+                            string roleName = ViewBag.UserRoles[user.Id];
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-bold text-dark">@user.FullName</div>
+                                    <div class="small text-muted">@user.Email</div>
+                                </td>
+                                @if (ViewBag.SelectedBranchId != null)
+                                {
+                                    <td>
+                                        <span class="badge @(roleName == "Chairman" ? "bg-primary" : roleName == "SuperAdmin" ? "bg-dark" : "bg-secondary") rounded-pill px-3">
+                                            @roleName
+                                        </span>
+                                    </td>
+                                }
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a asp-action="ResetPassword" asp-route-userId="@user.Id" asp-route-mode="@ViewBag.Mode" class="btn btn-outline-info btn-sm fw-bold px-3" style="border-radius: 8px;">
+                                            <i class="bi bi-key me-1"></i> Password
+                                        </a>
+                                        <form asp-action="DeleteUser" method="post" onsubmit="return confirm('Delete this user?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <input type="hidden" name="mode" value="@ViewBag.Mode" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm fw-bold px-3" style="border-radius: 8px;">
+                                                <i class="bi bi-trash3 me-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

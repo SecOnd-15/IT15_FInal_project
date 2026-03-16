@@ -1,0 +1,84 @@
+@model Latog_Final_project.Models.Budget
+
+@{
+    ViewData["Title"] = "Add Budget Category";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <!-- HEADER -->
+                <div class="bg-warning bg-gradient p-4 text-center">
+                    <div class="bg-white bg-opacity-25 d-inline-block p-3 rounded-circle mb-3 text-dark">
+                        <i class="bi bi-plus-circle fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">New Category</h3>
+                    <p class="text-dark opacity-75 mb-0">Define a new budget allocation area</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="AddBudget" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label asp-for="CategoryName" class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                <i class="bi bi-tag-fill me-1 text-warning"></i> Category Name
+                            </label>
+                            <div class="input-group input-group-lg shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                                <input asp-for="CategoryName" 
+                                       class="form-control border-0 bg-light" 
+                                       placeholder="e.g. Office Supplies, Maintenance"
+                                       required />
+                            </div>
+                            <span asp-validation-for="CategoryName" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="MonthlyLimit" class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                <i class="bi bi-currency-dollar me-1 text-warning"></i> Monthly Spending Limit (₱)
+                            </label>
+                            <div class="input-group input-group-lg shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted">₱</span>
+                                <input asp-for="MonthlyLimit" 
+                                       type="number" 
+                                       step="1" 
+                                       class="form-control border-0 bg-light" 
+                                       placeholder="Enter monthly limit"
+                                       required />
+                            </div>
+                            <span asp-validation-for="MonthlyLimit" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold shadow-sm p-3" style="border-radius: 12px; background: linear-gradient(135deg, #FFC107, #FF9800); border: none;">
+                                <i class="bi bi-check-circle-fill me-2"></i> CREATE CATEGORY
+                            </button>
+                            <a asp-action="Budgets" class="btn btn-light btn-lg fw-bold text-muted p-3" style="border-radius: 12px; border: none;">
+                                CANCEL
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <p class="text-center text-muted small mt-4 opacity-75">
+                New categories will immediately become available for Staff members to select in their requests.
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control:focus {
+        box-shadow: none;
+        background-color: #fff !important;
+    }
+    .input-group:focus-within {
+        outline: 2px solid #FFC107;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

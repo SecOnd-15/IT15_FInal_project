@@ -1,0 +1,77 @@
+@model Latog_Final_project.Models.Budget
+
+@{
+    ViewData["Title"] = "Edit Budget Limit";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <!-- HEADER -->
+                <div class="bg-warning bg-gradient p-4 text-center">
+                    <div class="bg-white bg-opacity-25 d-inline-block p-3 rounded-circle mb-3">
+                        <i class="bi bi-pencil-square fs-1 text-dark"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">Adjust Budget</h3>
+                    <p class="text-dark opacity-75 mb-0">Category: @Model.CategoryName</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="EditBudget" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CategoryName" />
+
+                        <div class="mb-4">
+                            <label asp-for="MonthlyLimit" class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                <i class="bi bi-currency-dollar me-1 text-warning"></i> Monthly Spending Limit (₱)
+                            </label>
+                            <div class="input-group input-group-lg shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted">₱</span>
+                                <input asp-for="MonthlyLimit" 
+                                       type="number" 
+                                       step="1" 
+                                       class="form-control border-0 bg-light" 
+                                       placeholder="Enter new limit"
+                                       required />
+                            </div>
+                            <span asp-validation-for="MonthlyLimit" class="text-danger small mt-1 d-block"></span>
+                            <div class="form-text mt-2 small">
+                                <i class="bi bi-info-circle me-1"></i> Current spending for this month: 
+                                <span class="fw-bold">₱@Model.CurrentSpending.ToString("N2")</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold shadow-sm p-3" style="border-radius: 12px; background: linear-gradient(135deg, #FFC107, #FF9800); border: none;">
+                                <i class="bi bi-save2-fill me-2"></i> UPDATE LIMIT
+                            </button>
+                            <a asp-action="Budgets" class="btn btn-light btn-lg fw-bold text-muted p-3" style="border-radius: 12px; border: none;">
+                                DISCARD CHANGES
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <p class="text-center text-muted small mt-4 opacity-75">
+                All changes are tracked in the system audit log for accountability.
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control:focus {
+        box-shadow: none;
+        background-color: #fff !important;
+    }
+    .input-group:focus-within {
+        outline: 2px solid #FFC107;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

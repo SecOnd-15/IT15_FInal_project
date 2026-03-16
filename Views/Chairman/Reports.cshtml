@@ -1,0 +1,87 @@
+@model Latog_Final_project.Models.ProcurementReportViewModel
+
+@{
+    ViewData["Title"] = "Procurement Reports";
+}
+
+<h2 class="mb-4">📊 Procurement Reports</h2>
+
+<div class="row g-3">
+
+    <!-- Total Requests -->
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body text-center">
+                <h1>@Model.TotalRequests</h1>
+                <p class="mb-0">Total Requests</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved -->
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body text-center">
+                <h1>@Model.ApprovedRequests</h1>
+                <p class="mb-0">Approved</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected -->
+    <div class="col-md-3">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body text-center">
+                <h1>@Model.RejectedRequests</h1>
+                <p class="mb-0">Rejected</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending -->
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow">
+            <div class="card-body text-center">
+                <h1>@Model.PendingRequests</h1>
+                <p class="mb-0">Pending</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<hr class="my-4" />
+
+<div class="row g-3">
+
+    <!-- Total Spending -->
+    <div class="col-md-4">
+        <div class="card bg-dark text-white shadow">
+            <div class="card-body text-center">
+                <h2>₱@Model.TotalSpending.ToString("N2")</h2>
+                <p class="mb-0">Total Spending (Paid)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paid Invoices -->
+    <div class="col-md-4">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body text-center">
+                <h1>@Model.PaidInvoices</h1>
+                <p class="mb-0">Paid Invoices</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unpaid Invoices -->
+    <div class="col-md-4">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body text-center">
+                <h1>@Model.UnpaidInvoices</h1>
+                <p class="mb-0">Unpaid Invoices</p>
+            </div>
+        </div>
+    </div>
+
+</div>

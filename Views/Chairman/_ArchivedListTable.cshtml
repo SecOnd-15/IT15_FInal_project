@@ -1,0 +1,109 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+
+<div class="table-responsive">
+    <table class="table modern-table mb-0">
+        <thead>
+            <tr>
+                <th>Requester</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Category</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                <th>Request Date</th>
+                <th>Decision Date</th>
+                <th>Archived Date</th>
+                <th class="text-center" style="width:130px;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Requests.Any())
+            {
+                <tr>
+                    <td colspan="10">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox d-block"></i>
+                            <p class="mb-0">No archived requests found.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Requests)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">@(item.User?.FullName ?? "Unknown")</div>
+                        </td>
+                        <td class="fw-semibold">@item.ItemName</td>
+                        <td>@item.Quantity</td>
+                        <td><span class="text-warning fw-bold" style="font-size:0.8rem;">@item.Category</span></td>
+                        <td style="max-width:180px;">@item.Purpose</td>
+                        <td>
+                            @if (item.Status == "Completed")
+                            {
+                                <span class="fw-bold" style="color: #059669; font-size: 0.82rem;">COMPLETED</span>
+                            }
+                            else if (item.Status == "Rejected")
+                            {
+                                <span class="fw-bold" style="color: #dc2626; font-size: 0.82rem;">REJECTED</span>
+                            }
+                            else
+                            {
+                                <span class="fw-bold" style="color: #64748b; font-size: 0.82rem;">@item.Status.ToUpper()</span>
+                            }
+                        </td>
+                        <td class="text-muted" style="font-size:0.8rem;">@item.RequestDate.ToString("MMM dd, yyyy")</td>
+                        <td class="text-muted" style="font-size:0.8rem;">@(item.DecisionDate?.ToString("MMM dd, yyyy") ?? "—")</td>
+                        <td class="text-muted" style="font-size:0.8rem;">@(item.ArchivedDate?.ToString("MMM dd, yyyy") ?? "—")</td>
+                        <td class="text-center">
+                            <form asp-action="Unarchive" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn-unarchive" onclick="return confirm('Restore this request from archive?');">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restore
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid #f1f5f9;">
+        <div class="text-muted small">
+            Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

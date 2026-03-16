@@ -1,0 +1,83 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+
+@{
+    ViewData["Title"] = "Archived Requests";
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+        border-radius: 16px;
+        padding: 24px 28px;
+        color: white;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(30, 58, 95, 0.25);
+    }
+    .page-header h2 { font-weight: 700; font-size: 1.5rem; margin: 0; }
+    .page-header p { opacity: 0.8; margin: 4px 0 0; font-size: 0.85rem; }
+    .breadcrumb-text { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7; margin-bottom: 4px; }
+
+    .content-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .modern-table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 14px;
+        border-bottom: 2px solid #e2e8f0;
+        font-weight: 700;
+    }
+    .modern-table tbody td {
+        padding: 14px;
+        color: #334155;
+        font-weight: 500;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .modern-table tbody tr { transition: background 0.2s; }
+    .modern-table tbody tr:hover { background: #fefce8; }
+
+    .badge-completed { background: rgba(16,185,129,0.12); color: #059669; padding: 5px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    .badge-rejected { background: rgba(239,68,68,0.12); color: #dc2626; padding: 5px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+
+    .btn-unarchive {
+        background: transparent;
+        color: #6366f1;
+        border: 1.5px solid #6366f1;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 6px 14px;
+        transition: all 0.2s;
+    }
+    .btn-unarchive:hover { background: #6366f1; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+
+    .empty-state { padding: 48px 20px; text-align: center; }
+    .empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 12px; }
+    .empty-state p { color: #94a3b8; font-weight: 500; font-size: 0.95rem; }
+</style>
+
+@inject Latog_Final_project.Services.IBranchService BranchService
+
+<div class="page-header">
+    @{
+        var branch = await BranchService.GetCurrentBranchAsync();
+        var branchName = branch?.BranchName ?? "Your Barangay";
+    }
+    <div class="breadcrumb-text">@branchName / Chairman / Archive</div>
+    <h2><i class="bi bi-archive me-2"></i>Archived Requests</h2>
+    <p>Completed and rejected requests that have been archived for record-keeping.</p>
+</div>
+
+<div class="content-card">
+    <div id="ajax-pagination-container">
+        @await Html.PartialAsync("_ArchivedListTable", Model)
+    </div>
+</div>

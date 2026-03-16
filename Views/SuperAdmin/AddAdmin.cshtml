@@ -1,0 +1,80 @@
+@model Latog_Final_project.Models.AddAdminViewModel
+
+@{
+    ViewData["Title"] = "Add New Admin";
+}
+
+<style>
+    :root {
+        --primary-yellow: #f4c430;
+        --text-dark: #2b2b2b;
+    }
+    .card-wrapper {
+        max-width: 600px;
+        margin: auto;
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+    .btn-gold {
+        background-color: var(--primary-yellow);
+        color: var(--text-dark);
+        border: none;
+        font-weight: 600;
+        padding: 10px 25px;
+    }
+    .btn-gold:hover {
+        background-color: #e0b400;
+    }
+    .section-title {
+        border-bottom: 2px solid var(--primary-yellow);
+        padding-bottom: 5px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="card-wrapper">
+        <h2 class="mb-4"><i class="bi bi-person-plus-fill text-warning"></i> Add New Administrator</h2>
+        
+        <form asp-action="AddAdmin" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <h5 class="section-title">Admin User Details</h5>
+            
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label fw-bold">Full Name</label>
+                <input asp-for="FullName" class="form-control" placeholder="e.g. Juan Dela Cruz" required />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label fw-bold">Admin Email</label>
+                <input asp-for="Email" class="form-control" type="email" placeholder="e.g. admin@example.com" required />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Password" class="form-label fw-bold">Initial Password</label>
+                    <input asp-for="Password" class="form-control" type="password" required />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label fw-bold">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" class="form-control" type="password" required />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" asp-route-branchId="1" asp-route-mode="admin" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-gold">Create Administrator</button>
+            </div>
+        </form>
+    </div>
+</div>

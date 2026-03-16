@@ -1,0 +1,340 @@
+﻿@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Account Requests";
+}
+
+<style>
+    .requests-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+        border-radius: 16px;
+        padding: 24px 28px;
+        color: white;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(30, 58, 95, 0.25);
+    }
+
+    .requests-header h2 {
+        font-weight: 700;
+        font-size: 1.4rem;
+        margin: 0;
+    }
+
+    .breadcrumb-text {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        opacity: 0.7;
+        margin-bottom: 4px;
+    }
+
+    .table-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 24px;
+    }
+
+    .section-label {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #334155;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-label i {
+        color: #3b82f6;
+    }
+
+    .badge-pending  { background: rgba(245,158,11,0.12); color: #d97706; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    .badge-approved { background: rgba(34,197,94,0.12);  color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    .badge-rejected { background: rgba(239,68,68,0.12);  color: #dc2626; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+
+    .btn-approve {
+        background: #22c55e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .btn-approve:hover {
+        background: #16a34a;
+        color: white;
+    }
+
+    .btn-reject {
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .btn-reject:hover {
+        background: #dc2626;
+        color: white;
+    }
+
+    .role-select {
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        border: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .role-select:hover {
+        border-color: #cbd5e1;
+        background-color: #f1f5f9;
+    }
+
+    .role-icon {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 10px;
+        font-size: 1rem;
+    }
+
+    .icon-chairman  { background: rgba(30, 58, 95, 0.1); color: #1e3a5f; }
+    .icon-treasurer { background: rgba(244, 196, 48, 0.15); color: #856404; }
+    .icon-staff     { background: rgba(71, 85, 105, 0.1); color: #475569; }
+    .icon-admin     { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+
+    .user-email {
+        font-size: 0.8rem;
+        color: #64748b;
+        display: block;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .search-container {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 1rem;
+    }
+
+    .search-input {
+        padding-left: 42px !important;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        height: 48px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .search-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+</style>
+
+<!-- HEADER -->
+<div class="requests-header d-flex justify-content-between align-items-center">
+    <div>
+        <div class="breadcrumb-text">ADMIN / ACCOUNT MANAGEMENT</div>
+        <h2><i class="bi bi-person-check me-2"></i>Account Requests</h2>
+        <p style="opacity:0.8; margin:4px 0 0; font-size:0.85rem;">Review and approve user account requests</p>
+    </div>
+    <button class="btn btn-light fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#createUserForm">
+        <i class="bi bi-person-plus-fill me-1"></i> Create New User
+    </button>
+</div>
+
+<!-- MANUAL CREATE FORM (Collapsible) -->
+<div class="collapse mb-4" id="createUserForm">
+    <div class="table-card border-top border-4 border-warning">
+        <div class="section-label">
+            <i class="bi bi-person-plus"></i> Manual Account Creation
+        </div>
+        <form method="post" asp-page-handler="CreateUser">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Full Name</label>
+                    <input asp-for="Input.FullName" class="form-control" placeholder="Enter Full Name" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Email Address</label>
+                    <input asp-for="Input.Email" class="form-control" type="email" placeholder="Enter Email" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Initial Password</label>
+                    <input asp-for="Input.Password" class="form-control" type="password" placeholder="Enter Password" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Role</label>
+                    <select asp-for="Input.Role" class="form-select">
+                        <option value="Staff">Staff</option>
+                        <option value="Treasurer">Treasurer</option>
+                        <option value="Chairman">Chairman</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">
+                        Create
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- CURRENT USERS (Management) -->
+<div class="table-card border-top border-4 border-primary">
+    <div class="row align-items-center mb-3">
+        <div class="col-md-6 mb-2 mb-md-0">
+            <div class="section-label mb-0">
+                <i class="bi bi-people-fill"></i> Current Users
+                <span id="userCount" class="badge bg-primary ms-1">@Model.CurrentUsers.Count</span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="search-container">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="userSearch" class="form-control search-input" placeholder="Search by name or email..." onkeyup="filterUsers()">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>User Information</th>
+                    <th>System Position</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.CurrentUsers)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                @{
+                                    var roleClass = Model.UserRoles[user.Id] switch
+                                    {
+                                        "Chairman" => "icon-chairman",
+                                        "Treasurer" => "icon-treasurer",
+                                        "SuperAdmin" => "icon-admin",
+                                        _ => "icon-staff"
+                                    };
+                                    var roleIcon = Model.UserRoles[user.Id] switch
+                                    {
+                                        "Chairman" => "bi-person-badge-fill",
+                                        "Treasurer" => "bi-cash-coin",
+                                        "SuperAdmin" => "bi-shield-lock-fill",
+                                        _ => "bi-person-fill"
+                                    };
+                                }
+                                <div class="role-icon @roleClass">
+                                    <i class="bi @roleIcon"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">@user.FullName</div>
+                                    <span class="user-email">@user.Email</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <form method="post" asp-page-handler="ChangeRole" class="d-inline-flex gap-1 align-items-center">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <select name="newRole" class="role-select" onchange="this.form.submit()" @(Model.UserRoles[user.Id] == "Chairman" ? "disabled" : "")>
+                                    <option value="Staff" selected="@(Model.UserRoles[user.Id] == "Staff")">Staff</option>
+                                    <option value="Treasurer" selected="@(Model.UserRoles[user.Id] == "Treasurer")">Treasurer</option>
+                                    <option value="Chairman" selected="@(Model.UserRoles[user.Id] == "Chairman")">Chairman</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td class="text-center">
+                            @if (user.Email != User.Identity?.Name)
+                            {
+                                <form method="post" asp-page-handler="DeleteUser" class="d-inline">
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <button type="submit" class="btn btn-reject btn-sm px-3" onclick="return confirm('Are you sure you want to delete this user?')">
+                                        <i class="bi bi-person-x-fill me-1"></i> Remove
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border px-3 py-2">
+                                    <i class="bi bi-person-check-fill me-1"></i> Current Session
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterUsers() {
+            var input = document.getElementById("userSearch");
+            var filter = input.value.toLowerCase();
+            var table = document.querySelector("table");
+            var rows = table.getElementsByTagName("tr");
+            var visibleCount = 0;
+
+            for (var i = 1; i < rows.length; i++) { // Skip header
+                var row = rows[i];
+                var nameElement = row.querySelector(".fw-bold");
+                var emailElement = row.querySelector(".user-email");
+                
+                if (!nameElement || !emailElement) continue;
+
+                var nameText = nameElement.innerText.toLowerCase();
+                var emailText = emailElement.innerText.toLowerCase();
+
+                if (nameText.indexOf(filter) > -1 || emailText.indexOf(filter) > -1) {
+                    row.style.display = "";
+                    visibleCount++;
+                } else {
+                    row.style.display = "none";
+                }
+            }
+            
+            // Update the badge count
+            document.getElementById("userCount").innerText = visibleCount;
+        }
+    </script>
+}

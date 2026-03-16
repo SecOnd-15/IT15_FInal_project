@@ -1,0 +1,115 @@
+@model Latog_Final_project.Models.AuditLogFilterViewModel
+
+<div class="log-results">
+    <table class="log-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Module</th>
+                <th>Entity ID</th>
+                <th>Timestamp</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Logs.Any())
+            {
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="bi bi-inbox"></i> No logs found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                foreach (var log in Model.Logs)
+                {
+                    var userEmail = Model.Users.FirstOrDefault(u => u.Id == log.UserId)?.Email ?? "Unknown";
+                    var actionClass = log.Action.ToLower() switch
+                    {
+                        "create" => "b-create",
+                        "edit" or "update" => "b-edit",
+                        "delete" => "b-delete",
+                        "approve" => "b-approve",
+                        "reject" => "b-reject",
+                        "logout" => "b-logout",
+                        _ => "b-default"
+                    };
+
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-dark" style="font-size: 0.75rem;">@userEmail</div>
+                            <div class="text-muted small">@log.UserId</div>
+                        </td>
+                        <td>
+                            <span class="badge @actionClass">@log.Action</span>
+                        </td>
+                        <td>
+                            <span class="module-tag">@log.Module</span>
+                        </td>
+                        <td class="small text-muted">@log.EntityId</td>
+                        <td class="small">
+                            <span class="text-dark">@log.Timestamp.ToString("MMM dd, yyyy")</span><br />
+                            <span class="text-muted">@log.Timestamp.ToString("hh:mm:ss tt")</span>
+                        </td>
+                        <td>
+                            <div class="details-text">@log.Details</div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination-wrapper">
+            <div class="pagination-info">
+                Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+                <span class="text-muted ms-2">(@Model.TotalRecords total records)</span>
+            </div>
+
+            <ul class="pagination">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link page-link-icon" 
+                       asp-action="AuditLog" 
+                       asp-route-page="@(Model.PageNumber - 1)"
+                       asp-route-roleFilter="@Model.Role"
+                       asp-route-actionFilter="@Model.Action">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" 
+                           asp-action="AuditLog" 
+                           asp-route-page="@i"
+                           asp-route-roleFilter="@Model.Role"
+                           asp-route-actionFilter="@Model.Action">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link page-link-icon" 
+                       asp-action="AuditLog" 
+                       asp-route-page="@(Model.PageNumber + 1)"
+                       asp-route-roleFilter="@Model.Role"
+                       asp-route-actionFilter="@Model.Action">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    }
+</div>

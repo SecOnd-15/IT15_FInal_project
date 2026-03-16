@@ -1,0 +1,131 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Requester</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Qty</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                <th style="width:180px;">Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Requests.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-4"></i><br />
+                        <span class="fw-semibold">No approved requests.</span>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Requests)
+                {
+                    <tr>
+                        <td class="small">@(item.User?.FullName ?? "Unknown User")</td>
+                        <td class="fw-semibold">@item.ItemName</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.Category))
+                            {
+                                <span class="badge bg-outline-secondary text-dark border small">@item.Category</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">---</span>
+                            }
+                        </td>
+                        <td>@item.Quantity</td>
+                        <td>@item.Purpose</td>
+
+                        <td>
+                            <span class="fw-bold" style="color: #059669; font-size: 0.82rem;">Approved</span>
+
+                            @if (item.HasPurchaseOrder)
+                            {
+                                <span class="fw-bold ms-1" style="color: #0891b2; font-size: 0.78rem;">• PO Created</span>
+                            }
+
+                            @if (item.Status == "Received")
+                            {
+                                <span class="fw-bold ms-1" style="color: #64748b; font-size: 0.78rem;">• Received</span>
+                            }
+                        </td>
+
+                        <td>
+                            @if (!item.HasPurchaseOrder)
+                            {
+                                <a asp-action="CreatePO"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-warning btn-sm w-100 shadow-sm" style="border-radius: 4px; font-weight: 500;">
+                                    <i class="bi bi-plus-circle"></i> Create PO
+                                </a>
+                            }
+                            else if (item.Status != "Received")
+                            {
+                                <!-- ✅ RECEIVE BUTTON -->
+                                <form asp-action="ReceiveOrder" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+
+                                    <button class="btn btn-success btn-sm w-100 shadow-sm" style="border-radius: 4px; font-weight: 500;">
+                                        <i class="bi bi-box-arrow-in-down"></i> Receive & Stock In
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="fw-bold" style="color: #64748b; font-size: 0.82rem;">Already Received</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-3 rounded shadow-sm border">
+        <div class="text-muted small">
+            Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

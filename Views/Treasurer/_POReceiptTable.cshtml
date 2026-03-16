@@ -1,0 +1,224 @@
+@model Latog_Final_project.Models.ResourceRequestViewModel
+
+<style>
+    .receipts-table-container {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table-modern thead {
+        background-color: #f8f9fa;
+    }
+
+    .custom-table th {
+        background-color: #f8f9fa;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        border: none;
+        padding: 12px 15px;
+    }
+
+    .custom-table td {
+        padding: 15px;
+        vertical-align: middle;
+        border-top: 1px solid #f1f1f1;
+        color: #334155;
+    }
+
+    /* STANDARD BADGE PILLS */
+    .status-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .status-completed { background-color: #d1fae5; color: #065f46; }
+    .status-partial { background-color: #fef3c7; color: #92400e; }
+    .status-pending { background-color: #f1f5f9; color: #475569; }
+
+    .delivery-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .delivery-label {
+        color: #94a3b8;
+        font-weight: 600;
+        margin-right: 8px;
+    }
+
+    .delivery-val {
+        font-weight: 700;
+    }
+</style>
+
+<div class="bg-white rounded-3 shadow-sm border overflow-hidden">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 180px;">Requester</th>
+                    <th>Item Details</th>
+                    <th>Supplier</th>
+                    <th>Financials</th>
+                    <th style="width: 150px;">Delivery</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!Model.Requests.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-inboxes fs-1 d-block mb-2 opacity-50"></i>
+                            No purchase order records found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Requests)
+                    {
+                        var received = item.ReceivedQuantity ?? 0;
+                        var remaining = item.Quantity - received;
+
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; color: #64748b;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span class="fw-bold small text-dark">@(item.User?.FullName ?? "Unknown User")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@item.ItemName</div>
+                                <div class="text-muted small">@item.Category</div>
+                            </td>
+
+                            <td class="small fw-semibold text-secondary">@item.Supplier</td>
+
+                            <td>
+                                <div class="fw-bold text-success">₱ @(item.Quantity > 0 ? (item.TotalAmount / item.Quantity)?.ToString("N2") : "0.00")</div>
+                                <div class="text-muted small" style="font-size: 0.65rem;">Total: ₱ @item.TotalAmount?.ToString("N2")</div>
+                            </td>
+
+                            <td>
+                                <div class="delivery-item">
+                                    <span class="delivery-label">Qty:</span>
+                                    <span class="delivery-val">@item.Quantity</span>
+                                </div>
+                                <div class="delivery-item">
+                                    <span class="delivery-label">Got:</span>
+                                    <span class="delivery-val text-success">@received</span>
+                                </div>
+                                @if (remaining > 0)
+                                {
+                                    <div class="delivery-item border-top mt-1 pt-1">
+                                        <span class="delivery-label text-danger">Left:</span>
+                                        <span class="delivery-val text-danger">@remaining</span>
+                                    </div>
+                                }
+                            </td>
+
+                            <td class="text-center">
+                                @if (item.Status == "Completed")
+                                {
+                                    <span class="fw-bold" style="color: #059669; font-size: 0.82rem;">Completed</span>
+                                }
+                                else if (item.Status == "Partially Received")
+                                {
+                                    <span class="fw-bold" style="color: #d97706; font-size: 0.82rem;">Partial</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-bold" style="color: #64748b; font-size: 0.82rem;">Pending</span>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <a asp-action="ViewReceipt" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary px-3 fw-bold" style="border-radius: 4px;">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+
+                                    @if (item.Status != "Completed")
+                                    {
+                                        <form asp-action="ReceiveItems" method="post" class="m-0 d-flex gap-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="number" name="receivedQty" class="form-control form-control-sm text-center" placeholder="Qty" min="1" max="@remaining" required style="width: 60px; border-radius: 4px;" />
+                                            <button class="btn btn-sm btn-success px-2 fw-bold" style="border-radius: 4px;" title="Receive">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="Archive" method="post" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning px-3 fw-bold" onclick="return confirm('Archive?');" style="border-radius: 4px;">
+                                                <i class="bi bi-archive"></i> Archive
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-4 bg-white p-3 rounded-3 shadow-sm border border-light">
+        <div class="text-muted small fw-bold">
+            Page <span class="text-dark">@Model.PageNumber</span> of <span class="text-dark">@Model.TotalPages</span>
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link border-0 rounded-circle mx-1" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item mx-1 @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link border-0 rounded-circle fw-bold" asp-action="@Model.ActionName" asp-route-page="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link border-0 rounded-circle mx-1" asp-action="@Model.ActionName" asp-route-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

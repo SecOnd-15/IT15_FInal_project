@@ -1,0 +1,132 @@
+﻿@model Latog_Final_project.Models.ResourceRequest
+
+@{
+    ViewData["Title"] = "Edit Request";
+}
+
+<div class="container-fluid py-2">
+    <!-- HEADER -->
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-warning bg-gradient p-3 rounded-3 shadow-sm me-3">
+            <i class="bi bi-pencil-square fs-3 text-dark"></i>
+        </div>
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">Edit Resource Request</h2>
+            <p class="text-muted mb-0">Update your pending request details</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-9 col-lg-11">
+            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 15px;">
+                <!-- ACCENT STRIP -->
+                <div style="height: 6px; background: linear-gradient(90deg, #FFC107, #FF8F00);"></div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Edit" method="post" id="requestForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row g-4">
+                            <!-- ITEM NAME -->
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                    <i class="bi bi-tag-fill me-1 text-warning"></i> Item Name
+                                </label>
+                                <div class="input-group input-group-lg custom-input-group">
+                                    <input asp-for="ItemName"
+                                           class="form-control border-end-0 bg-light"
+                                           placeholder="What do you need?" 
+                                           style="border-radius: 10px 0 0 10px; font-size: 1rem;"/>
+                                    <span class="input-group-text bg-light border-start-0 text-muted" style="border-radius: 0 10px 10px 0;">
+                                        <i class="bi bi-pencil small"></i>
+                                    </span>
+                                </div>
+                                <span asp-validation-for="ItemName" class="text-danger small mt-1 d-block"></span>
+                            </div>
+
+                            <!-- QUANTITY -->
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                    <i class="bi bi-stack me-1 text-warning"></i> Quantity
+                                </label>
+                                <div class="input-group input-group-lg custom-input-group">
+                                    <input asp-for="Quantity"
+                                           type="number"
+                                           class="form-control border-end-0 bg-light"
+                                           placeholder="0" 
+                                           style="border-radius: 10px 0 0 10px; font-size: 1rem;"/>
+                                    <span class="input-group-text bg-light border-start-0 text-muted" style="border-radius: 0 10px 10px 0;">
+                                        <i class="bi bi-hash small"></i>
+                                    </span>
+                                </div>
+                                <span asp-validation-for="Quantity" class="text-danger small mt-1 d-block"></span>
+                            </div>
+
+
+                            <!-- PURPOSE -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                    <i class="bi bi-chat-left-text-fill me-1 text-warning"></i> Purpose of Request
+                                </label>
+                                <textarea asp-for="Purpose"
+                                          class="form-control bg-light"
+                                          rows="3"
+                                          placeholder="Explain why this resource is needed..."
+                                          style="border-radius: 10px; font-size: 1rem;"></textarea>
+                                <span asp-validation-for="Purpose" class="text-danger small mt-1 d-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex flex-column flex-sm-row gap-2">
+                            <button type="submit" class="btn btn-warning px-4 py-2 shadow-sm fw-bold border-0 transition-transform" style="border-radius: 8px; background: linear-gradient(135deg, #FFC107, #FFB300);">
+                                <i class="bi bi-check-circle-fill me-2"></i> SAVE CHANGES
+                            </button>
+                            <a asp-action="Index" class="btn btn-light px-4 py-2 fw-bold text-muted border-0" style="border-radius: 8px;">
+                                CANCEL
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-input-group .form-control:focus {
+        box-shadow: none;
+        border-color: #FFC107;
+        background-color: #fff !important;
+    }
+    
+    .custom-input-group .form-control:focus + .input-group-text {
+        border-color: #FFC107;
+        background-color: #fff !important;
+        color: #FFC107 !important;
+    }
+
+    textarea:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25) !important;
+        border-color: #FFC107 !important;
+        background-color: #fff !important;
+    }
+
+    .transition-transform {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .transition-transform:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3) !important;
+    }
+
+    .transition-transform:active {
+        transform: translateY(0);
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

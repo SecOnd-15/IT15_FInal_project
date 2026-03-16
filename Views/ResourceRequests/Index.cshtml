@@ -1,0 +1,79 @@
+﻿@model List<Latog_Final_project.Models.ResourceRequest>
+
+@{
+    ViewData["Title"] = "Resource Requests";
+}
+
+<h2 class="mb-3">Resource Requests</h2>
+
+@if (User.IsInRole("Staff"))
+{
+    <div class="mb-3">
+        <a asp-controller="Staff"
+           asp-action="Create"
+           class="btn btn-primary">
+            + Create Resource Request
+        </a>
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th style="width: 220px;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var req in Model)
+            {
+                <tr>
+                    <td>@req.ItemName</td>
+                    <td>@req.Quantity</td>
+                    <td>@req.Purpose</td>
+                    <td>@req.Status</td>
+                    <td>@req.RequestDate.ToShortDateString()</td>
+
+                    <td>
+                        @* CHAIRMAN ACTIONS *@
+                        @if (User.IsInRole("Chairman") && req.Status == "Pending")
+                        {
+                            <form asp-action="Approve" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@req.Id" />
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    Approve
+                                </button>
+                            </form>
+
+                            <form asp-action="Reject" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@req.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    Reject
+                                </button>
+                            </form>
+                        }
+
+                        @* TREASURER ACTION *@
+                        @if (User.IsInRole("Treasurer") && req.Status == "Approved")
+                        {
+                            <form asp-action="UpdateInventory" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@req.Id" />
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    Update Inventory
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

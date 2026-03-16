@@ -1,0 +1,111 @@
+@model IEnumerable<Latog_Final_project.Models.Budget>
+
+@{
+    ViewData["Title"] = "Budget Management";
+}
+
+<div class="container-fluid py-4">
+    <!-- HEADER -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+            <div class="bg-warning bg-gradient p-3 rounded-3 shadow-sm me-3 text-dark">
+                <i class="bi bi-wallet2 fs-3"></i>
+            </div>
+            <div>
+                <h2 class="mb-0 fw-bold text-dark">Budget Management</h2>
+                <p class="text-muted mb-0">Monitor and manage category-specific spending limits</p>
+            </div>
+        </div>
+        @if (User.IsInRole("Treasurer"))
+        {
+            <div>
+                <a asp-action="AddBudget" class="btn btn-warning fw-bold shadow-sm px-4 py-2" style="border-radius: 10px;">
+                    <i class="bi bi-plus-circle-fill me-2"></i> ADD NEW CATEGORY
+                </a>
+            </div>
+        }
+    </div>
+
+
+
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            var percentage = item.MonthlyLimit > 0 ? (item.CurrentSpending / item.MonthlyLimit) * 100 : 0;
+            var barColor = percentage > 90 ? "bg-danger" : (percentage > 70 ? "bg-warning" : "bg-success");
+            
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 15px; transition: transform 0.2s ease;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="bg-light p-2 rounded-3 text-warning">
+                                <i class="bi bi-tag-fill fs-4"></i>
+                            </div>
+                            @if (User.IsInRole("Treasurer"))
+                            {
+                                <div class="text-end d-flex gap-2">
+                                    <a asp-action="EditBudget" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning border-0 rounded-pill px-3">
+                                        <i class="bi bi-pencil-square me-1"></i> Edit
+                                    </a>
+                                    <form asp-action="DeleteBudget" asp-route-id="@item.Id" method="post" id="delete-form-@item.Id" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-pill px-3" onclick="confirmDelete(@item.Id, '@item.CategoryName')">
+                                            <i class="bi bi-trash3 me-1"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-1">@item.CategoryName</h5>
+                        <div class="d-flex align-items-baseline mb-3">
+                            <span class="fs-4 fw-bold text-dark">₱@item.CurrentSpending.ToString("N2")</span>
+                            <span class="text-muted ms-1 small">/ ₱@item.MonthlyLimit.ToString("N0")</span>
+                        </div>
+
+                        <div class="progress mb-2" style="height: 10px; border-radius: 5px;">
+                            <div class="progress-bar @barColor progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: @(percentage > 100 ? 100 : percentage)%" 
+                                 aria-valuenow="@percentage" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between small text-muted">
+                            <span>@(Math.Round(percentage, 1))% Used</span>
+                            <span>₱@((item.MonthlyLimit - item.CurrentSpending).ToString("N2")) Left</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+<style>
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+</style>
+
+<script>
+    function confirmDelete(id, name) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `Do you want to delete the "${name}" budget category? This may affect existing requests.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-form-' + id).submit();
+            }
+        });
+    }
+</script>

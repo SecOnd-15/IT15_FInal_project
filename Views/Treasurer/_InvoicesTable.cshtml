@@ -1,0 +1,161 @@
+@model Latog_Final_project.Models.InvoiceViewModel
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th class="py-3">Invoice #</th>
+                <th class="py-3">Item Name</th>
+                <th class="py-3">Supplier</th>
+                <th class="py-3">Total</th>
+                <th class="py-3">Paid</th>
+                <th class="py-3">Balance</th>
+                <th class="py-3">Status</th>
+                <th class="py-3">Due Date</th>
+                <th class="py-3 text-center" style="width:220px;">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Invoices.Any())
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        No invoices found.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var inv in Model.Invoices)
+                {
+                    // Handle legacy data where AmountPaid was 0 but status was Paid
+                    var actualPaid = (inv.PaymentStatus == "Paid" && inv.AmountPaid == 0) ? inv.TotalAmount : inv.AmountPaid;
+                    var balance = (inv.PaymentStatus == "Paid") ? 0 : (inv.TotalAmount - actualPaid);
+                    var isOverdue = inv.PaymentStatus != "Paid" && inv.DueDate.HasValue && inv.DueDate.Value < DateTime.Now;
+
+                    <tr class="@(isOverdue ? "table-danger bg-opacity-10" : "")">
+                        <td class="fw-bold" style="font-family: monospace; color: #6f42c1;">
+                            @(string.IsNullOrEmpty(inv.InvoiceNumber) ? $"#{inv.Id}" : inv.InvoiceNumber)
+                        </td>
+                        <td class="fw-semibold">@(inv.ResourceRequest?.ItemName ?? "N/A")</td>
+                        <td>@inv.Supplier</td>
+                        <td class="fw-bold text-dark">₱@inv.TotalAmount.ToString("N2")</td>
+                        <td class="text-success fw-semibold">₱@actualPaid.ToString("N2")</td>
+                        <td class="@(balance > 0 ? "text-danger" : "text-success") fw-bold">₱@balance.ToString("N2")</td>
+                        <td>
+                            @if (inv.PaymentStatus == "Paid")
+                            {
+                                <span class="fw-bold" style="color: #059669; font-size: 0.82rem;">Paid</span>
+                            }
+                            else if (inv.PaymentStatus == "Partially Paid")
+                            {
+                                <span class="fw-bold" style="color: #d97706; font-size: 0.82rem;">Partial</span>
+                            }
+                            else
+                            {
+                                <span class="fw-bold" style="color: #dc2626; font-size: 0.82rem;">Unpaid</span>
+                            }
+                        </td>
+                        <td>
+                            @if (inv.DueDate.HasValue)
+                            {
+                                <span>@inv.DueDate.Value.ToString("MMM dd, yyyy")</span>
+                                @if (isOverdue)
+                                {
+                                    <br />
+                                    <span class="fw-bold" style="color: #dc2626; font-size: 0.7rem;">OVERDUE</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                @* PAYMENT BUTTON *@
+                                @if (inv.PaymentStatus != "Paid")
+                                {
+                                    <button class="btn btn-outline-success btn-sm rounded-pill px-2 shadow-sm"
+                                            onclick="openPaymentModal(@inv.Id, @inv.TotalAmount, @inv.AmountPaid)"
+                                            title="Record Payment">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="btn btn-sm btn-light rounded-pill px-2 disabled" style="opacity: 0.5;">
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    </span>
+                                }
+
+                                @* ATTACHMENT BUTTON *@
+                                @if (!string.IsNullOrEmpty(inv.AttachmentPath))
+                                {
+                                    <a href="@inv.AttachmentPath" target="_blank"
+                                       class="btn btn-outline-primary btn-sm rounded-pill px-2 shadow-sm" title="View Attachment">
+                                        <i class="bi bi-paperclip"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-2 shadow-sm"
+                                            onclick="openAttachmentModal(@inv.Id)" title="Upload Attachment">
+                                        <i class="bi bi-upload"></i>
+                                    </button>
+                                }
+
+                                @* PDF BUTTON *@
+                                <a asp-action="DownloadInvoicePdf" asp-route-id="@inv.Id"
+                                   class="btn btn-outline-dark btn-sm rounded-pill px-2 shadow-sm" title="Download PDF">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- PAGINATION -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 bg-white p-3 rounded shadow-sm border">
+        <div class="text-muted small">
+            Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
+        
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="Invoices" asp-route-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" asp-action="Invoices" asp-route-page="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="Invoices" asp-route-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

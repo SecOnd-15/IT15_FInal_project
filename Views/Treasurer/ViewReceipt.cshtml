@@ -1,0 +1,53 @@
+﻿@model Latog_Final_project.Models.ResourceRequest
+
+<h2 class="mb-4 fw-bold">PO Receipt</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted fw-bold">Item:</div>
+            <div class="col-sm-9 fw-semibold">@Model.ItemName</div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted fw-bold">Quantity:</div>
+            <div class="col-sm-9">@Model.Quantity</div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted fw-bold">Supplier:</div>
+            <div class="col-sm-9">@Model.Supplier</div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted fw-bold">Total Amount:</div>
+            <div class="col-sm-9 text-success fw-bold">₱ @Model.TotalAmount?.ToString("N2")</div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted fw-bold">Status:</div>
+            <div class="col-sm-9">
+                <span class="badge @(Model.Status == "Completed" ? "bg-success" : "bg-warning text-dark")">@Model.Status</span>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="d-flex justify-content-start">
+            @if (Model.IsArchived)
+            {
+                <a asp-action="ArchivedList" class="btn btn-secondary shadow-sm rounded-pill px-4">
+                    <i class="bi bi-arrow-left"></i> Back to Archive
+                </a>
+            }
+            else
+            {
+                <a asp-action="POReceipt" class="btn btn-secondary shadow-sm rounded-pill px-4">
+                    <i class="bi bi-arrow-left"></i> Back to PO Receipts
+                </a>
+            }
+        </div>
+
+    </div>
+</div>

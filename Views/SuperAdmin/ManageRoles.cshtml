@@ -1,0 +1,53 @@
+﻿@{
+    var user = ViewBag.User as ApplicationUser;
+    var roles = ViewBag.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole>;
+    var userRoles = ViewBag.UserRoles as IList<string>;
+}
+
+@if (user == null || roles == null || userRoles == null)
+{
+    <div class="alert alert-danger">Error: User or role data is missing.</div>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+}
+else
+{
+    <h2>Assign Role</h2>
+
+    <p><strong>User:</strong> @user.Email</p>
+    <p><strong>Current Role:</strong> @string.Join(", ", userRoles)</p>
+    <form method="post">
+        <input type="hidden" name="userId" value="@user.Id" />
+        <input type="hidden" name="mode" value="@ViewBag.Mode" />
+
+        <div class="form-group mb-3">
+            <label class="fw-bold">Select Role</label>
+            <select id="roleSelect" name="role" class="form-select" required style="border-radius: 10px;">
+                @foreach (var role in roles)
+                {
+                    if (role.Name == "SuperAdmin") continue;
+                    <option value="@role.Name" selected="@(userRoles.Contains(role.Name))">@role.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="fw-bold">Select Barangay (Branch)</label>
+            <select id="branchSelect" name="branchId" class="form-select" style="border-radius: 10px;">
+                <option value="">-- Select Barangay --</option>
+                @foreach (var branch in (List<Latog_Final_project.Models.Branch>)ViewBag.Branches)
+                {
+                    <option value="@branch.Id" selected="@(user.BranchId == branch.Id)">@branch.BranchName</option>
+                }
+            </select>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-success fw-bold px-4 py-2" style="border-radius: 10px;">
+                <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Index" asp-route-branchId="@(user.BranchId ?? 1)" asp-route-mode="@ViewBag.Mode" class="btn btn-outline-secondary fw-bold px-4 py-2" style="border-radius: 10px;">
+                Back
+            </a>
+        </div>
+    </form>
+}

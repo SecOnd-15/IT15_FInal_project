@@ -1,0 +1,177 @@
+@model List<Latog_Final_project.Models.Branch>
+
+@{
+    ViewData["Title"] = "Barangay Management";
+}
+
+<style>
+    :root {
+        --primary-yellow: #f4c430;
+        --dark-yellow: #e0b400;
+        --text-dark: #2b2b2b;
+    }
+
+    h2 {
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+
+    .card-wrapper {
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .btn-gold {
+        background-color: var(--primary-yellow);
+        color: var(--text-dark);
+        border: none;
+        font-weight: 600;
+    }
+
+    .btn-gold:hover {
+        background-color: var(--dark-yellow);
+    }
+
+    .table thead {
+        background-color: var(--primary-yellow);
+        color: var(--text-dark);
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-geo-alt text-warning"></i> Barangay Management</h2>
+        <a asp-action="AddBranch" class="btn btn-gold">
+            <i class="bi bi-plus-circle"></i> Add New Barangay
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+
+        @if (!Model.Any())
+        {
+            @* The empty state would go here, but we always show Global card now *@
+        }
+        
+        @foreach (var branch in Model)
+        {
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm branch-card" style="border-radius: 20px; transition: all 0.3s; @(!branch.IsActive ? "opacity: 0.6;" : "")">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="icon-box bg-soft-warning p-3 rounded-4" style="background: rgba(244, 196, 48, 0.15); color: #856404; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-building-fill" style="font-size: 1.5rem;"></i>
+                            </div>
+                            @if (branch.IsActive)
+                            {
+                                <span class="badge bg-success-soft text-success fw-bold" style="background: rgba(25, 135, 84, 0.1); border-radius: 10px; padding: 6px 12px;">ACTIVE</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-danger fw-bold" style="background: rgba(220, 53, 69, 0.1); border-radius: 10px; padding: 6px 12px;">INACTIVE</span>
+                            }
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-1">@branch.BranchName</h5>
+                        <p class="small text-muted mb-3">Official Barangay Office</p>
+
+                        <div class="mb-3 p-3 bg-light rounded-4">
+                            <div class="text-muted small"><i class="bi bi-geo-alt me-1"></i> @branch.Location</div>
+                            <div class="text-muted small mt-1"><i class="bi bi-telephone me-1"></i> @branch.ContactNumber</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-person-badge me-1 text-warning"></i> Authorized Staff</h6>
+                            <div class="staff-list" style="max-height: 120px; overflow-y: auto;">
+                                @{
+                                    var branchUsers = (Dictionary<int, List<Latog_Final_project.Models.ApplicationUser>>)ViewBag.BranchUsers;
+                                    if (branchUsers.ContainsKey(branch.Id))
+                                    {
+                                        foreach (var bUser in branchUsers[branch.Id])
+                                        {
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="bg-warning rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                                                <div class="small text-dark fw-medium text-truncate">@(string.IsNullOrEmpty(bUser.FullName) ? bUser.Email : bUser.FullName)</div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted small italic">No staff assigned</div>
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="d-flex gap-2 mb-2">
+                                <a asp-action="EditBranch" asp-route-id="@branch.Id" class="btn btn-outline-primary w-100 fw-bold py-2" style="border-radius: 12px;">
+                                    <i class="bi bi-pencil-square me-1"></i> Edit
+                                </a>
+                                <form asp-action="ToggleBranchStatus" method="post" class="w-100">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@branch.Id" />
+                                    @if (branch.IsActive)
+                                    {
+                                        <button type="submit" class="btn btn-outline-warning w-100 fw-bold py-2" style="border-radius: 12px;">
+                                            <i class="bi bi-pause-circle me-1"></i> Deactivate
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-outline-success w-100 fw-bold py-2" style="border-radius: 12px;">
+                                            <i class="bi bi-play-circle me-1"></i> Activate
+                                        </button>
+                                    }
+                                </form>
+                            </div>
+                            <a asp-action="Index" asp-route-branchId="@branch.Id" class="btn btn-warning w-100 fw-bold py-2" style="border-radius: 12px;">
+                                <i class="bi bi-people-fill me-1"></i> Users
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <style>
+        .branch-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
+        }
+
+        .staff-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .staff-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .staff-list::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+        .staff-list::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+    </style>
+</div>

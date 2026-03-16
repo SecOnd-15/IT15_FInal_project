@@ -1,0 +1,66 @@
+@model IEnumerable<Latog_Final_project.Models.Budget>
+
+@{
+    ViewData["Title"] = "Organization Budgets";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-wallet2 text-primary me-2"></i>Organization Budgets</h2>
+            <p class="text-muted mb-0">Monitor available funds across all categories.</p>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        @foreach (var budget in Model)
+        {
+            var remaining = budget.MonthlyLimit - budget.CurrentSpending;
+            var percentSpent = budget.MonthlyLimit > 0 ? (double)(budget.CurrentSpending / budget.MonthlyLimit) * 100 : 0;
+            var statusColor = percentSpent > 90 ? "danger" : (percentSpent > 70 ? "warning" : "success");
+
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary">
+                                <i class="bi bi-tag-fill fs-4"></i>
+                            </div>
+                            <span class="badge bg-@statusColor rounded-pill">@(percentSpent.ToString("F0"))% Spent</span>
+                        </div>
+                        
+                        <h5 class="fw-bold mb-1">@budget.CategoryName</h5>
+                        <p class="text-muted small mb-3">Current allocated budget</p>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1 small">
+                                <span class="text-muted">Spent: ₱@budget.CurrentSpending.ToString("N2")</span>
+                                <span class="fw-bold">₱@budget.MonthlyLimit.ToString("N2")</span>
+                            </div>
+                            <div class="progress" style="height: 10px; border-radius: 5px; background-color: #f0f0f0;">
+                                <div class="progress-bar bg-@statusColor" role="progressbar" 
+                                     style="width: @percentSpent%; border-radius: 5px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 @(remaining < 0 ? "bg-danger" : "bg-light") @(remaining < 0 ? "bg-opacity-10" : "") rounded-3 border">
+                            <div class="small fw-bold @(remaining < 0 ? "text-danger" : "text-muted") mb-1 text-uppercase">Remaining Balance</div>
+                            <div class="h4 fw-bold @(remaining < 0 ? "text-danger" : "text-success") mb-0">₱@remaining.ToString("N2")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="bg-light d-inline-block p-4 rounded-circle mb-3">
+                <i class="bi bi-wallet2 fs-1 text-muted"></i>
+            </div>
+            <h4 class="text-muted">No budgets found</h4>
+            <p>Please contact the Treasurer to initialize budget categories.</p>
+        </div>
+    }
+</div>
