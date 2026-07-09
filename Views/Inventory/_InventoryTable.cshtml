@@ -72,17 +72,17 @@
 
                         <!-- ACTIONS -->
                         <td class="text-center">
-                            <div class="d-flex gap-2 justify-content-center">
+                            <div class="d-flex flex-column gap-1">
                                 <a asp-action="StockOut"
                                    asp-route-id="@item.Id"
-                                   class="btn btn-outline-danger btn-sm px-3 fw-bold" style="border-radius: 6px; min-width: 95px;">
-                                    <i class="bi bi-box-arrow-up me-1"></i> Stock-Out
+                                   class="btn btn-danger btn-sm w-100 shadow-sm" style="border-radius: 4px; font-weight: 500;">
+                                    <i class="bi bi-box-arrow-up"></i> Stock-Out
                                 </a>
 
                                 <a asp-action="StockAdjust"
                                    asp-route-id="@item.Id"
-                                   class="btn btn-outline-primary btn-sm px-3 fw-bold" style="border-radius: 6px; min-width: 85px;">
-                                    <i class="bi bi-wrench me-1"></i> Adjust
+                                   class="btn btn-primary btn-sm w-100 shadow-sm" style="border-radius: 4px; font-weight: 500;">
+                                    <i class="bi bi-wrench"></i> Adjust
                                 </a>
                             </div>
                         </td>

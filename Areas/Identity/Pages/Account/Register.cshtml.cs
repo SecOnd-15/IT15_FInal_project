@@ -1,4 +1,4 @@
-﻿using Latog_Final_project.Data;
+using Latog_Final_project.Data;
 using Latog_Final_project.Models;
 using Latog_Final_project.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -257,6 +257,59 @@ namespace Latog_Final_project.Areas.Identity.Pages.Account
             else
             {
                 TempData["Error"] = "Failed to delete user.";
+            }
+
+            return RedirectToPage();
+        }
+        // ===============================
+        // 🔒 TOGGLE USER STATUS (Activate / Deactivate)
+        // ===============================
+        public async Task<IActionResult> OnPostToggleUserStatusAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId)) return RedirectToPage();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            // Prevent toggling own account
+            var currentUserId = _userManager.GetUserId(User);
+            if (userId == currentUserId)
+            {
+                TempData["Error"] = "You cannot deactivate your own account.";
+                return RedirectToPage();
+            }
+
+            bool isCurrentlyLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now;
+
+            if (isCurrentlyLocked)
+            {
+                // Activate: remove lockout
+                await _userManager.SetLockoutEndDateAsync(user, null);
+                await _userManager.ResetAccessFailedCountAsync(user);
+
+                await _auditService.LogAsync(
+                    "Activate",
+                    "Account Management",
+                    "ApplicationUser",
+                    userId,
+                    $"User account '{user.Email}' was activated by Chairman"
+                );
+                TempData["Success"] = $"Account for {user.Email} has been activated.";
+            }
+            else
+            {
+                // Deactivate: set lockout far in the future
+                await _userManager.SetLockoutEnabledAsync(user, true);
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
+
+                await _auditService.LogAsync(
+                    "Deactivate",
+                    "Account Management",
+                    "ApplicationUser",
+                    userId,
+                    $"User account '{user.Email}' was deactivated by Chairman"
+                );
+                TempData["Success"] = $"Account for {user.Email} has been deactivated.";
             }
 
             return RedirectToPage();

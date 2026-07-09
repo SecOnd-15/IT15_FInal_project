@@ -1,5 +1,6 @@
 using Latog_Final_project.Data;
 using Latog_Final_project.Models;
+using Latog_Final_project.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,17 +21,20 @@ namespace Latog_Final_project.Areas.Identity.Pages.Account
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<LoginModel> _logger;
+        private readonly IRecaptchaService _recaptchaService;
 
         public LoginModel(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
-            ILogger<LoginModel> logger)
+            ILogger<LoginModel> logger,
+            IRecaptchaService recaptchaService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _context = context;
             _logger = logger;
+            _recaptchaService = recaptchaService;
         }
 
         [BindProperty]
@@ -63,6 +67,14 @@ namespace Latog_Final_project.Areas.Identity.Pages.Account
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
+
+            var recaptchaResponse = Request.Form["g-recaptcha-response"].ToString();
+            var isRecaptchaValid = await _recaptchaService.VerifyAsync(recaptchaResponse);
+            if (!isRecaptchaValid)
+            {
+                ModelState.AddModelError(string.Empty, "reCAPTCHA verification failed. Please try again.");
+                return Page();
+            }
 
             if (!ModelState.IsValid)
                 return Page();

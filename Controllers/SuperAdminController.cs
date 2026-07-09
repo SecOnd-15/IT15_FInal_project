@@ -237,7 +237,57 @@ namespace Latog_Final_project.Controllers
         }
 
         // ============================
-        // DELETE USER
+        // TOGGLE USER STATUS (ARCHIVE/DEACTIVATE)
+        // ============================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleUserStatus(string userId, string mode)
+        {
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            if (User.Identity?.Name == user.Email)
+            {
+                TempData["Error"] = "You cannot deactivate your own account.";
+                return RedirectToAction(nameof(Index), new { branchId = user.BranchId ?? 1, mode = mode });
+            }
+
+            var isLocked = await _userManager.IsLockedOutAsync(user);
+            string actionResult;
+
+            if (isLocked)
+            {
+                // ACTIVATE: Unlock the user
+                await _userManager.SetLockoutEndDateAsync(user, null);
+                actionResult = "activated";
+            }
+            else
+            {
+                // DEACTIVATE: Lock the user until year 9999
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+                actionResult = "deactivated (archived)";
+            }
+
+            // ✅ AUDIT LOG
+            await _auditService.LogAsync(
+                "User Status Update",
+                "User Management",
+                "ApplicationUser",
+                userId,
+                $"User '{user.Email}' was {actionResult} by Super Admin"
+            );
+
+            TempData["Success"] = $"User '{user.Email}' has been {actionResult} successfully.";
+
+            return RedirectToAction(nameof(Index), new { branchId = user.BranchId ?? 1, mode = mode });
+        }
+
+        // ============================
+        // DELETE USER (Hard Delete - Kept for internal logic if needed)
         // ============================
         [HttpPost]
         [ValidateAntiForgeryToken]

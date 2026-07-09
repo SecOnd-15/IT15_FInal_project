@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model RegisterModel
 
 @{
@@ -244,7 +244,8 @@
             <tbody>
                 @foreach (var user in Model.CurrentUsers)
                 {
-                    <tr>
+                    bool isDeactivated = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.Now;
+                    <tr style="@(isDeactivated ? "opacity:0.55;" : "")">
                         <td>
                             <div class="d-flex align-items-center">
                                 @{
@@ -267,7 +268,13 @@
                                     <i class="bi @roleIcon"></i>
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark">@user.FullName</div>
+                                    <div class="fw-bold text-dark">
+                                        @user.FullName
+                                        @if (isDeactivated)
+                                        {
+                                            <span class="badge bg-danger ms-2" style="font-size:0.65rem;">Deactivated</span>
+                                        }
+                                    </div>
                                     <span class="user-email">@user.Email</span>
                                 </div>
                             </div>
@@ -285,11 +292,28 @@
                         <td class="text-center">
                             @if (user.Email != User.Identity?.Name)
                             {
-                                <form method="post" asp-page-handler="DeleteUser" class="d-inline">
+                                <form method="post" asp-page-handler="ToggleUserStatus" class="d-inline toggle-status-form">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="userId" value="@user.Id" />
-                                    <button type="submit" class="btn btn-reject btn-sm px-3" onclick="return confirm('Are you sure you want to delete this user?')">
-                                        <i class="bi bi-person-x-fill me-1"></i> Remove
-                                    </button>
+                                    @if (isDeactivated)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm px-3 fw-bold toggle-status-btn"
+                                                style="background:#22c55e;color:white;border:none;border-radius:8px;"
+                                                data-action="activate"
+                                                data-name="@user.FullName">
+                                            <i class="bi bi-person-check-fill me-1"></i> Activate
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-reject btn-sm px-3 toggle-status-btn"
+                                                data-action="deactivate"
+                                                data-name="@user.FullName">
+                                            <i class="bi bi-person-x-fill me-1"></i> Deactivate
+                                        </button>
+                                    }
                                 </form>
                             }
                             else
@@ -315,11 +339,11 @@
             var rows = table.getElementsByTagName("tr");
             var visibleCount = 0;
 
-            for (var i = 1; i < rows.length; i++) { // Skip header
+            for (var i = 1; i < rows.length; i++) {
                 var row = rows[i];
                 var nameElement = row.querySelector(".fw-bold");
                 var emailElement = row.querySelector(".user-email");
-                
+
                 if (!nameElement || !emailElement) continue;
 
                 var nameText = nameElement.innerText.toLowerCase();
@@ -332,9 +356,34 @@
                     row.style.display = "none";
                 }
             }
-            
-            // Update the badge count
             document.getElementById("userCount").innerText = visibleCount;
         }
+
+        // SweetAlert2 confirmation for Activate / Deactivate
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.toggle-status-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var action = btn.getAttribute('data-action');
+                    var name = btn.getAttribute('data-name') || 'this user';
+                    var isDeactivate = action === 'deactivate';
+
+                    Swal.fire({
+                        title: isDeactivate ? 'Deactivate Account?' : 'Activate Account?',
+                        text: 'Are you sure you want to ' + action + ' the account of ' + name + '?',
+                        icon: isDeactivate ? 'warning' : 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: isDeactivate ? '#dc3545' : '#22c55e',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: isDeactivate ? 'Yes, Deactivate' : 'Yes, Activate',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            btn.closest('form').submit();
+                        }
+                    });
+                });
+            });
+        });
     </script>
 }

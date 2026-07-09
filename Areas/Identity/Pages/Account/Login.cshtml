@@ -1,8 +1,10 @@
-﻿@page
+@page
 @model LoginModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Login";
+    var siteKey = Configuration["Recaptcha:SiteKey"] ?? "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 }
 
 <!-- BOOTSTRAP -->
@@ -96,7 +98,7 @@
 
         <!-- FORM -->
         <div class="p-4">
-            <form method="post">
+            <form method="post" id="login-form">
 
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -137,6 +139,11 @@
                     </a>
                 </div>
 
+                <!-- reCAPTCHA -->
+                <div class="mb-3 d-flex justify-content-center">
+                    <div class="g-recaptcha" data-sitekey="@siteKey"></div>
+                </div>
+
                 <!-- BUTTON -->
                 <button type="submit" class="btn login-btn w-100">
                     Sign in
@@ -149,6 +156,9 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <!-- Google reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
 
     <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -179,6 +189,20 @@
                 passwordInput.type = 'password';
                 icon.classList.remove('bi-eye-slash');
                 icon.classList.add('bi-eye');
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            const recaptchaResponse = grecaptcha.enterprise.getResponse();
+            if (recaptchaResponse.length === 0) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Verification Required',
+                    text: 'Please check the "I\'m not a robot" checkbox before signing in.',
+                    confirmButtonColor: '#f4c430',
+                    background: '#fff'
+                });
             }
         });
     </script>

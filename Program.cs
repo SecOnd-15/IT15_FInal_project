@@ -7,7 +7,31 @@ using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
-var builder = WebApplication.CreateBuilder(args);
+string? contentRootPath = null;
+
+// If the wwwroot folder doesn't exist in the current working directory,
+// search up the directory tree to locate the project root where it is located.
+if (!System.IO.Directory.Exists(System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot")))
+{
+    var candidate = AppContext.BaseDirectory;
+    while (!string.IsNullOrEmpty(candidate))
+    {
+        if (System.IO.Directory.Exists(System.IO.Path.Combine(candidate, "wwwroot")))
+        {
+            contentRootPath = candidate;
+            break;
+        }
+        candidate = System.IO.Path.GetDirectoryName(candidate);
+    }
+}
+
+var builderOptions = new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = contentRootPath
+};
+
+var builder = WebApplication.CreateBuilder(builderOptions);
 
 // =======================
 // ✅ DATABASE
@@ -42,6 +66,8 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IBranchService, BranchService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IBudgetGuardService, BudgetGuardService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IRecaptchaService, RecaptchaService>();
 
 builder.Services.AddScoped<IEmailSender<ApplicationUser>, EmailService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, EmailService>();

@@ -1,23 +1,24 @@
 @model Latog_Final_project.Models.AuditLogFilterViewModel
 
-<div class="log-results">
-    <table class="log-table">
+<div class="p-table-container">
+    <table class="p-table">
         <thead>
             <tr>
-                <th>User</th>
+                <th>User Identity</th>
                 <th>Action</th>
                 <th>Module</th>
-                <th>Entity ID</th>
+                <th>Entity Reference</th>
                 <th>Timestamp</th>
-                <th>Details</th>
+                <th>Activity Details</th>
             </tr>
         </thead>
         <tbody>
             @if (!Model.Logs.Any())
             {
                 <tr>
-                    <td colspan="6" class="empty-state">
-                        <i class="bi bi-inbox"></i> No logs found.
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <span class="fw-600">No matching audit logs found.</span>
                     </td>
                 </tr>
             }
@@ -26,90 +27,70 @@
                 foreach (var log in Model.Logs)
                 {
                     var userEmail = Model.Users.FirstOrDefault(u => u.Id == log.UserId)?.Email ?? "Unknown";
-                    var actionClass = log.Action.ToLower() switch
+                    var badgeClass = log.Action.ToLower() switch
                     {
-                        "create" => "b-create",
-                        "edit" or "update" => "b-edit",
-                        "delete" => "b-delete",
-                        "approve" => "b-approve",
-                        "reject" => "b-reject",
-                        "logout" => "b-logout",
-                        _ => "b-default"
+                        "create" or "add" => "p-badge-success",
+                        "edit" or "update" or "modify" => "p-badge-warning",
+                        "delete" or "remove" or "deactivate" => "p-badge-danger",
+                        "approve" or "activate" => "p-badge-info",
+                        _ => "p-badge-secondary"
                     };
 
                     <tr>
-                        <td>
-                            <div class="fw-bold text-dark" style="font-size: 0.75rem;">@userEmail</div>
-                            <div class="text-muted small">@log.UserId</div>
+                        <td style="max-width: 180px;">
+                            <div class="fw-700 text-primary truncate">@userEmail</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">ID: @log.UserId</div>
                         </td>
                         <td>
-                            <span class="badge @actionClass">@log.Action</span>
+                            <span class="p-badge @badgeClass">@log.Action</span>
                         </td>
                         <td>
-                            <span class="module-tag">@log.Module</span>
+                            <span class="p-badge p-badge-secondary" style="background: rgba(0,0,0,0.05);">@log.Module</span>
                         </td>
-                        <td class="small text-muted">@log.EntityId</td>
-                        <td class="small">
-                            <span class="text-dark">@log.Timestamp.ToString("MMM dd, yyyy")</span><br />
-                            <span class="text-muted">@log.Timestamp.ToString("hh:mm:ss tt")</span>
+                        <td class="fw-600 text-muted" style="font-size: 0.8rem;">#@log.EntityId</td>
+                        <td>
+                            <div class="fw-600">@log.Timestamp.ToString("MMM dd, yyyy")</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">@log.Timestamp.ToString("hh:mm tt")</div>
                         </td>
                         <td>
-                            <div class="details-text">@log.Details</div>
+                            <div class="text-muted" style="font-size: 0.825rem; line-height: 1.4; max-width: 350px;">@log.Details</div>
                         </td>
                     </tr>
                 }
             }
         </tbody>
     </table>
+</div>
 
-    @if (Model.TotalPages > 1)
-    {
-        <div class="pagination-wrapper">
-            <div class="pagination-info">
-                Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
-                <span class="text-muted ms-2">(@Model.TotalRecords total records)</span>
-            </div>
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-4 p-card py-3">
+        <div class="text-muted fw-500" style="font-size: 0.875rem;">
+            Showing Page <strong>@Model.PageNumber</strong> of <strong>@Model.TotalPages</strong>
+        </div>
 
-            <ul class="pagination">
+        <nav>
+            <ul class="pagination mb-0 gap-2">
                 <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
-                    <a class="page-link page-link-icon" 
+                    <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
                        asp-action="AuditLog" 
                        asp-route-page="@(Model.PageNumber - 1)"
                        asp-route-roleFilter="@Model.Role"
                        asp-route-actionFilter="@Model.Action">
-                        <i class="bi bi-chevron-left"></i>
+                        <i class="bi bi-chevron-left me-1"></i> Prev
                     </a>
                 </li>
 
-                @{
-                    int startPage = Math.Max(1, Model.PageNumber - 2);
-                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
-                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
-                }
-
-                @for (int i = startPage; i <= endPage; i++)
-                {
-                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                        <a class="page-link" 
-                           asp-action="AuditLog" 
-                           asp-route-page="@i"
-                           asp-route-roleFilter="@Model.Role"
-                           asp-route-actionFilter="@Model.Action">
-                            @i
-                        </a>
-                    </li>
-                }
-
                 <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
-                    <a class="page-link page-link-icon" 
+                    <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
                        asp-action="AuditLog" 
                        asp-route-page="@(Model.PageNumber + 1)"
                        asp-route-roleFilter="@Model.Role"
                        asp-route-actionFilter="@Model.Action">
-                        <i class="bi bi-chevron-right"></i>
+                        Next <i class="bi bi-chevron-right ms-1"></i>
                     </a>
                 </li>
             </ul>
-        </div>
-    }
-</div>
+        </nav>
+    </div>
+}

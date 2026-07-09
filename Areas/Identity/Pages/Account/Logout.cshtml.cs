@@ -1,4 +1,4 @@
-﻿using Latog_Final_project.Models;
+using Latog_Final_project.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +26,15 @@ namespace Latog_Final_project.Areas.Identity.Pages.Account
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
 
-            return RedirectToAction("Index", "Home");
-
-
+            if (returnUrl != null)
+            {
+                return LocalRedirect(returnUrl);
+            }
+            else
+            {
+                // Redirect directly to the login panel as requested
+                return RedirectToPage("/Account/Login");
+            }
         }
 
 
